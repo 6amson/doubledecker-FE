@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Logo } from "@/components/Logo";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Download, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface QueryResultsState {
   headers: string[];
@@ -76,27 +76,16 @@ export const QueryResults = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft size={20} />
-            </Button>
-            <Logo size="sm" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={handleNewQuery}>
-              <RefreshCw size={16} />
-              New Query
-            </Button>
-            <Button variant="bus" size="sm" onClick={handleDownloadCSV}>
-              <Download size={16} />
-              Download CSV
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header showBack backTo={-1}>
+        <Button variant="outline" size="sm" onClick={handleNewQuery}>
+          <RefreshCw size={16} />
+          New Query
+        </Button>
+        <Button variant="bus" size="sm" onClick={handleDownloadCSV}>
+          <Download size={16} />
+          Download CSV
+        </Button>
+      </Header>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-6">

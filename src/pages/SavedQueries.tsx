@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Logo } from "@/components/Logo";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { 
-  ArrowLeft, Search, FolderOpen, Calendar, Filter, ArrowUpDown, 
+  Search, FolderOpen, Calendar, Filter, ArrowUpDown, 
   Columns, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet 
 } from "lucide-react";
 import { SavedQuery, getSavedQueries, deleteQuery } from "@/lib/savedQueries";
@@ -58,17 +58,7 @@ export const SavedQueries = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-              <ArrowLeft size={20} />
-            </Button>
-            <Logo size="sm" />
-          </div>
-        </div>
-      </header>
+      <Header showBack backTo="/" />
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">

@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Logo } from "@/components/Logo";
+import { Header } from "@/components/Header";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { CSVPreviewModal } from "@/components/CSVPreviewModal";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
   FileSpreadsheet, 
   Clock, 
@@ -62,37 +61,30 @@ export const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-3 flex items-center justify-between">
-          <Logo />
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={() => navigate("/saved-queries")}>
-              <FolderOpen size={16} />
-              Saved Queries
+      <Header>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/saved-queries")}>
+          <FolderOpen size={16} />
+          Saved Queries
+        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 bg-primary/10 hover:bg-primary/20">
+              <User size={16} className="text-primary" />
             </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 bg-primary/10 hover:bg-primary/20">
-                  <User size={16} className="text-primary" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="text-muted-foreground text-xs" disabled>
-                  user@example.com
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive">
-                  <LogOut size={14} className="mr-2" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem className="text-muted-foreground text-xs" disabled>
+              user@example.com
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <LogOut size={14} className="mr-2" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </Header>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
