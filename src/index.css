@@ -6,7 +6,71 @@
 
 @layer base {
   :root {
-    /* DoubleDecker Theme - London Bus Inspired */
+    /* Light Theme - DoubleDecker */
+    --background: 40 20% 97%;
+    --foreground: 0 0% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    /* London Bus Red */
+    --primary: 0 78% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Light Secondary */
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 40 15% 90%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Cream Accent */
+    --accent: 0 78% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 88%;
+    --input: 40 15% 92%;
+    --ring: 0 78% 52%;
+
+    --radius: 0.75rem;
+
+    /* Custom DoubleDecker tokens */
+    --bus-red: 0 78% 52%;
+    --bus-red-hover: 0 78% 45%;
+    --bus-red-glow: 0 78% 52%;
+    --cream: 40 30% 92%;
+    --charcoal: 0 0% 12%;
+    --charcoal-light: 0 0% 18%;
+    
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(0 78% 52%) 0%, hsl(0 70% 40%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 20% 97%) 100%);
+    --gradient-glow: radial-gradient(circle at center, hsl(0 78% 52% / 0.1) 0%, transparent 70%);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.08);
+    --shadow-md: 0 4px 20px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 8px 40px hsl(0 0% 0% / 0.15);
+    --shadow-red: 0 4px 30px hsl(0 78% 52% / 0.2);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 12%;
+    --sidebar-primary: 0 78% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 20% 95%;
+    --sidebar-accent-foreground: 0 0% 20%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 78% 52%;
+  }
+
+  .dark {
+    /* Dark Theme - DoubleDecker London Bus Inspired */
     --background: 0 0% 7%;
     --foreground: 40 20% 95%;
 
@@ -37,8 +101,6 @@
     --border: 0 0% 20%;
     --input: 0 0% 18%;
     --ring: 0 78% 52%;
-
-    --radius: 0.75rem;
 
     /* Custom DoubleDecker tokens */
     --bus-red: 0 78% 52%;

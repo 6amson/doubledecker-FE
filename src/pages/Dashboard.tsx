@@ -4,6 +4,7 @@ import { Logo } from "@/components/Logo";
 import { FileUploadZone } from "@/components/FileUploadZone";
 import { CSVPreviewModal } from "@/components/CSVPreviewModal";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
   FileSpreadsheet, 
   Clock, 
@@ -66,6 +67,7 @@ export const Dashboard = () => {
         <div className="container mx-auto px-6 py-3 flex items-center justify-between">
           <Logo />
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => navigate("/saved-queries")}>
               <FolderOpen size={16} />
               Saved Queries
