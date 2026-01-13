@@ -11,7 +11,7 @@ import {
 export interface SortRule {
   id: string;
   column: string;
-  direction: "asc" | "desc";
+  ascending: boolean;
 }
 
 interface SortPanelProps {
@@ -74,19 +74,19 @@ export const SortPanel = ({
                 </Select>
 
                 <Button
-                  variant={sort.direction === "asc" ? "secondary" : "ghost"}
+                  variant={sort.ascending ? "secondary" : "ghost"}
                   size="icon"
                   className="h-9 w-9"
-                  onClick={() => onUpdateSort(sort.id, { direction: "asc" })}
+                  onClick={() => onUpdateSort(sort.id, { ascending: true })}
                 >
                   <ArrowUp size={14} />
                 </Button>
 
                 <Button
-                  variant={sort.direction === "desc" ? "secondary" : "ghost"}
+                  variant={!sort.ascending ? "secondary" : "ghost"}
                   size="icon"
                   className="h-9 w-9"
-                  onClick={() => onUpdateSort(sort.id, { direction: "desc" })}
+                  onClick={() => onUpdateSort(sort.id, { ascending: false })}
                 >
                   <ArrowDown size={14} />
                 </Button>

@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Filter, Plus, X, ChevronDown } from "lucide-react";
+import { Filter, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,10 +9,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export type FilterOp = "Eq" | "Ne" | "Gt" | "Ge" | "Lt" | "Le" | "Contains";
+
 export interface FilterRule {
   id: string;
   column: string;
-  operator: string;
+  operator: FilterOp;
   value: string;
 }
 
@@ -25,16 +26,14 @@ interface FilterPanelProps {
   onRemoveFilter: (id: string) => void;
 }
 
-const operators = [
-  { value: "equals", label: "equals" },
-  { value: "not_equals", label: "not equals" },
-  { value: "contains", label: "contains" },
-  { value: "starts_with", label: "starts with" },
-  { value: "ends_with", label: "ends with" },
-  { value: "greater_than", label: ">" },
-  { value: "less_than", label: "<" },
-  { value: "is_empty", label: "is empty" },
-  { value: "is_not_empty", label: "is not empty" },
+const operators: { value: FilterOp; label: string }[] = [
+  { value: "Eq", label: "= equals" },
+  { value: "Ne", label: "≠ not equals" },
+  { value: "Gt", label: "> greater than" },
+  { value: "Ge", label: "≥ greater or equal" },
+  { value: "Lt", label: "< less than" },
+  { value: "Le", label: "≤ less or equal" },
+  { value: "Contains", label: "∋ contains" },
 ];
 
 export const FilterPanel = ({
@@ -91,7 +90,7 @@ export const FilterPanel = ({
                 <div className="flex gap-2">
                   <Select
                     value={filter.operator}
-                    onValueChange={(value) => onUpdateFilter(filter.id, { operator: value })}
+                    onValueChange={(value) => onUpdateFilter(filter.id, { operator: value as FilterOp })}
                   >
                     <SelectTrigger className="h-9 bg-muted border-none flex-1">
                       <SelectValue placeholder="Operator" />
@@ -105,14 +104,12 @@ export const FilterPanel = ({
                     </SelectContent>
                   </Select>
 
-                  {!["is_empty", "is_not_empty"].includes(filter.operator) && (
-                    <Input
-                      placeholder="Value"
-                      value={filter.value}
-                      onChange={(e) => onUpdateFilter(filter.id, { value: e.target.value })}
-                      className="h-9 bg-muted border-none flex-1"
-                    />
-                  )}
+                  <Input
+                    placeholder="Value"
+                    value={filter.value}
+                    onChange={(e) => onUpdateFilter(filter.id, { value: e.target.value })}
+                    className="h-9 bg-muted border-none flex-1"
+                  />
 
                   <Button
                     variant="ghost"
