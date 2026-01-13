@@ -19,9 +19,6 @@ export const Logo = ({ size = "md" }: LogoProps) => {
           <Bus size={sizes[size].icon} className="text-primary-foreground" />
         </div>
       </div>
-      <span className={`font-display font-bold ${sizes[size].text} text-foreground`}>
-        Double<span className="text-primary">Decker</span>
-      </span>
     </div>
   );
 };

@@ -244,7 +244,6 @@ export const QueryBuilder = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => setLoadQueryModalOpen(true)}>
               <FolderOpen size={16} />
               Load Query
@@ -253,6 +252,7 @@ export const QueryBuilder = () => {
               <Save size={16} />
               Save Query
             </Button>
+            <ThemeToggle />
             <Button variant="bus" size="sm" onClick={handleRunQuery}>
               <Play size={16} />
               Run Query
@@ -301,6 +301,8 @@ export const QueryBuilder = () => {
             <CSVPreviewPanel
               headers={columns}
               rows={rows}
+              fileName={file?.name || "uploaded_data.csv"}
+              fileSize={file?.size}
             />
             
             <QueryPreview
