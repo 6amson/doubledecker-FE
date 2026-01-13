@@ -126,18 +126,18 @@ export const OperationsSidebar = ({
         <div className="query-panel">
           <CollapsibleTrigger className="flex items-center justify-between w-full py-1">
             <div className="flex items-center gap-2">
-              <Columns3 size={18} className="text-primary" />
+              <Columns3 size={18} className="text-muted-foreground" />
               <h3 className="font-display font-semibold text-foreground">Select</h3>
               <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
                 {selectedColumns.length}/{columns.length}
               </Badge>
             </div>
-            <ChevronDown size={16} className={cn("transition-transform", openSections.columns && "rotate-180")} />
+            <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.columns && "rotate-180")} />
           </CollapsibleTrigger>
           
           <CollapsibleContent className="pt-3">
             <div className="flex gap-2 mb-3">
-              <button onClick={onSelectAllColumns} className="text-xs text-primary hover:underline">
+              <button onClick={onSelectAllColumns} className="text-xs text-foreground/70 hover:text-foreground hover:underline">
                 Select all
               </button>
               <span className="text-muted-foreground">|</span>
@@ -155,7 +155,7 @@ export const OperationsSidebar = ({
                     <Checkbox
                       checked={selectedColumns.includes(column)}
                       onCheckedChange={() => onToggleColumn(column)}
-                      className="border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      className="border-muted-foreground data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
                     />
                     <span className="text-sm text-foreground/90 truncate">{column}</span>
                   </label>
@@ -171,7 +171,7 @@ export const OperationsSidebar = ({
         <div className="query-panel">
           <CollapsibleTrigger className="flex items-center justify-between w-full py-1">
             <div className="flex items-center gap-2">
-              <Filter size={18} className="text-primary" />
+              <Filter size={18} className="text-muted-foreground" />
               <h3 className="font-display font-semibold text-foreground">Filter</h3>
               {filters.length > 0 && (
                 <Badge variant="default" className="ml-1 text-xs h-5 px-1.5 bg-primary">
@@ -188,7 +188,7 @@ export const OperationsSidebar = ({
               >
                 <Plus size={14} />
               </Button>
-              <ChevronDown size={16} className={cn("transition-transform", openSections.filters && "rotate-180")} />
+              <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.filters && "rotate-180")} />
             </div>
           </CollapsibleTrigger>
           
@@ -234,7 +234,7 @@ export const OperationsSidebar = ({
         <div className="query-panel">
           <CollapsibleTrigger className="flex items-center justify-between w-full py-1">
             <div className="flex items-center gap-2">
-              <Group size={18} className="text-primary" />
+              <Group size={18} className="text-muted-foreground" />
               <h3 className="font-display font-semibold text-foreground">Group By</h3>
               {(groupBy.columns.length > 0 || groupBy.aggregations.length > 0) && (
                 <Badge variant="default" className="ml-1 text-xs h-5 px-1.5 bg-primary">
@@ -242,7 +242,7 @@ export const OperationsSidebar = ({
                 </Badge>
               )}
             </div>
-            <ChevronDown size={16} className={cn("transition-transform", openSections.groupBy && "rotate-180")} />
+            <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.groupBy && "rotate-180")} />
           </CollapsibleTrigger>
           
           <CollapsibleContent className="pt-3 space-y-3">
@@ -316,7 +316,7 @@ export const OperationsSidebar = ({
         <div className="query-panel">
           <CollapsibleTrigger className="flex items-center justify-between w-full py-1">
             <div className="flex items-center gap-2">
-              <Wand2 size={18} className="text-primary" />
+              <Wand2 size={18} className="text-muted-foreground" />
               <h3 className="font-display font-semibold text-foreground">Transform</h3>
               {transforms.length > 0 && (
                 <Badge variant="default" className="ml-1 text-xs h-5 px-1.5 bg-primary">
@@ -333,7 +333,7 @@ export const OperationsSidebar = ({
               >
                 <Plus size={14} />
               </Button>
-              <ChevronDown size={16} className={cn("transition-transform", openSections.transforms && "rotate-180")} />
+              <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.transforms && "rotate-180")} />
             </div>
           </CollapsibleTrigger>
           
@@ -379,7 +379,7 @@ export const OperationsSidebar = ({
         <div className="query-panel">
           <CollapsibleTrigger className="flex items-center justify-between w-full py-1">
             <div className="flex items-center gap-2">
-              <ArrowUpDown size={18} className="text-primary" />
+              <ArrowUpDown size={18} className="text-muted-foreground" />
               <h3 className="font-display font-semibold text-foreground">Sort</h3>
               {sorts.length > 0 && (
                 <Badge variant="default" className="ml-1 text-xs h-5 px-1.5 bg-primary">
@@ -396,7 +396,7 @@ export const OperationsSidebar = ({
               >
                 <Plus size={14} />
               </Button>
-              <ChevronDown size={16} className={cn("transition-transform", openSections.sorts && "rotate-180")} />
+              <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.sorts && "rotate-180")} />
             </div>
           </CollapsibleTrigger>
           
@@ -441,7 +441,7 @@ export const OperationsSidebar = ({
       <div className="query-panel">
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-2">
-            <Hash size={18} className="text-primary" />
+            <Hash size={18} className="text-muted-foreground" />
             <h3 className="font-display font-semibold text-foreground">Limit</h3>
             {limit !== null && (
               <Badge variant="default" className="ml-1 text-xs h-5 px-1.5 bg-primary">
