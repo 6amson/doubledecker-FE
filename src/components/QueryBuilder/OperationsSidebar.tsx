@@ -155,7 +155,7 @@ export const OperationsSidebar = ({
                     <Checkbox
                       checked={selectedColumns.includes(column)}
                       onCheckedChange={() => onToggleColumn(column)}
-                      className="border-muted-foreground data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
+                      className="border-muted-foreground/50"
                     />
                     <span className="text-sm text-foreground/90 truncate">{column}</span>
                   </label>
