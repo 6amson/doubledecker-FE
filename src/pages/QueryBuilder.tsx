@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Logo } from "@/components/Logo";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { OperationsSidebar, GroupByRule } from "@/components/QueryBuilder/OperationsSidebar";
 import { FilterModal, FilterRule } from "@/components/QueryBuilder/FilterModal";
@@ -12,10 +12,9 @@ import { SaveQueryModal } from "@/components/QueryBuilder/SaveQueryModal";
 import { LoadQueryModal } from "@/components/QueryBuilder/LoadQueryModal";
 import { CSVPreviewPanel } from "@/components/QueryBuilder/CSVPreviewPanel";
 import { QueryPreview } from "@/components/QueryBuilder/QueryPreview";
-import { ArrowLeft, Play, Save, FolderOpen } from "lucide-react";
+import { Play, Save, FolderOpen } from "lucide-react";
 import { saveQuery, SavedQuery } from "@/lib/savedQueries";
 import { toast } from "sonner";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Mock data for demo
 const mockColumns = ["id", "name", "email", "company", "revenue", "country", "created_at", "status"];
@@ -230,32 +229,20 @@ export const QueryBuilder = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-              <ArrowLeft size={20} />
-            </Button>
-            <Logo size="sm" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => setLoadQueryModalOpen(true)}>
-              <FolderOpen size={16} />
-              Load Query
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setSaveQueryModalOpen(true)}>
-              <Save size={16} />
-              Save Query
-            </Button>
-            <Button variant="bus" size="sm" onClick={handleRunQuery}>
-              <Play size={16} />
-              Run Query
-            </Button>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <Header showBack backTo="/">
+        <Button variant="outline" size="sm" onClick={() => setLoadQueryModalOpen(true)}>
+          <FolderOpen size={16} />
+          Load Query
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setSaveQueryModalOpen(true)}>
+          <Save size={16} />
+          Save Query
+        </Button>
+        <Button variant="bus" size="sm" onClick={handleRunQuery}>
+          <Play size={16} />
+          Run Query
+        </Button>
+      </Header>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-6">
