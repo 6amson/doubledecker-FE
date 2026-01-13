@@ -26,6 +26,12 @@ export const CSVPreviewPanel = ({ headers, rows, fileName = "uploaded_data.csv",
   
   return (
     <div className="query-panel">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <FileSpreadsheet size={18} className="text-muted-foreground" />
+        <h3 className="font-display font-semibold text-foreground">Table Preview</h3>
+      </div>
+
       {/* Metadata Section - Above table */}
       <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
