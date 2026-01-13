@@ -16,7 +16,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         // DoubleDecker custom variants
-        bus: "bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_4px_30px_hsl(0_78%_52%/0.3)] font-semibold",
+        bus: "bg-primary text-primary-foreground hover:bg-primary/80 font-semibold",
         cream: "bg-accent text-accent-foreground hover:bg-accent/90 font-semibold",
         panel: "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
       },
