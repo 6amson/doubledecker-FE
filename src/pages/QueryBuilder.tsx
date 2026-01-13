@@ -248,11 +248,11 @@ export const QueryBuilder = () => {
               <Save size={16} />
               Save Query
             </Button>
-            <ThemeToggle />
             <Button variant="bus" size="sm" onClick={handleRunQuery}>
               <Play size={16} />
               Run Query
             </Button>
+            <ThemeToggle />
           </div>
         </div>
       </header>
