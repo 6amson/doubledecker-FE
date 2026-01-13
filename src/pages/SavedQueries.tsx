@@ -66,10 +66,6 @@ export const SavedQueries = () => {
               <ArrowLeft size={20} />
             </Button>
             <Logo size="sm" />
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-medium">Saved Queries</span>
-            </div>
           </div>
         </div>
       </header>
