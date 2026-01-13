@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { ColumnSelector } from "@/components/QueryBuilder/ColumnSelector";
-import { FilterPanel, FilterRule, FilterOp } from "@/components/QueryBuilder/FilterPanel";
-import { TransformPanel, TransformRule, TransformOp } from "@/components/QueryBuilder/TransformPanel";
-import { SortPanel, SortRule } from "@/components/QueryBuilder/SortPanel";
-import { LimitPanel } from "@/components/QueryBuilder/LimitPanel";
-import { GroupByPanel, GroupByRule, Aggregation, AggFunc } from "@/components/QueryBuilder/GroupByPanel";
+import { OperationsSidebar, GroupByRule } from "@/components/QueryBuilder/OperationsSidebar";
+import { FilterModal, FilterRule, FilterOp } from "@/components/QueryBuilder/FilterModal";
+import { TransformModal, TransformRule, TransformOp } from "@/components/QueryBuilder/TransformModal";
+import { SortModal, SortRule } from "@/components/QueryBuilder/SortModal";
+import { AggregationModal, Aggregation, AggFunc } from "@/components/QueryBuilder/AggregationModal";
+import { LimitModal } from "@/components/QueryBuilder/LimitModal";
+import { CSVPreviewPanel } from "@/components/QueryBuilder/CSVPreviewPanel";
 import { QueryPreview } from "@/components/QueryBuilder/QueryPreview";
 import { ResultsPreview } from "@/components/QueryBuilder/ResultsPreview";
 import { ArrowLeft, Play, Download, Save } from "lucide-react";
@@ -30,14 +31,36 @@ export const QueryBuilder = () => {
   const location = useLocation();
   const file = location.state?.file as File | null;
 
+  // Data state
   const [columns, setColumns] = useState<string[]>(mockColumns);
   const [rows, setRows] = useState<string[][]>(mockRows);
+  
+  // Query state
   const [selectedColumns, setSelectedColumns] = useState<string[]>(mockColumns);
   const [filters, setFilters] = useState<FilterRule[]>([]);
   const [transforms, setTransforms] = useState<TransformRule[]>([]);
   const [sorts, setSorts] = useState<SortRule[]>([]);
   const [groupBy, setGroupBy] = useState<GroupByRule>({ columns: [], aggregations: [] });
   const [limit, setLimit] = useState<number | null>(null);
+
+  // Modal state
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [editingFilter, setEditingFilter] = useState<FilterRule | null>(null);
+  
+  const [transformModalOpen, setTransformModalOpen] = useState(false);
+  const [editingTransform, setEditingTransform] = useState<TransformRule | null>(null);
+  
+  const [sortModalOpen, setSortModalOpen] = useState(false);
+  const [editingSort, setEditingSort] = useState<SortRule | null>(null);
+  
+  const [aggModalOpen, setAggModalOpen] = useState(false);
+  const [editingAgg, setEditingAgg] = useState<Aggregation | null>(null);
+  
+  const [limitModalOpen, setLimitModalOpen] = useState(false);
+
+  // Results state
+  const [showResults, setShowResults] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const tableName = file?.name?.replace('.csv', '') || "uploaded_data";
 
@@ -82,17 +105,15 @@ export const QueryBuilder = () => {
   }, []);
 
   // Filter handlers
-  const handleAddFilter = useCallback(() => {
-    setFilters(prev => [...prev, {
-      id: crypto.randomUUID(),
-      column: "",
-      operator: "Eq" as FilterOp,
-      value: ""
-    }]);
-  }, []);
-
-  const handleUpdateFilter = useCallback((id: string, updates: Partial<FilterRule>) => {
-    setFilters(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+  const handleSaveFilter = useCallback((filter: FilterRule) => {
+    setFilters(prev => {
+      const exists = prev.find(f => f.id === filter.id);
+      if (exists) {
+        return prev.map(f => f.id === filter.id ? filter : f);
+      }
+      return [...prev, filter];
+    });
+    setEditingFilter(null);
   }, []);
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -100,18 +121,15 @@ export const QueryBuilder = () => {
   }, []);
 
   // Transform handlers
-  const handleAddTransform = useCallback(() => {
-    setTransforms(prev => [...prev, {
-      id: crypto.randomUUID(),
-      column: "",
-      operation: "Multiply" as TransformOp,
-      value: 0,
-      alias: ""
-    }]);
-  }, []);
-
-  const handleUpdateTransform = useCallback((id: string, updates: Partial<TransformRule>) => {
-    setTransforms(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  const handleSaveTransform = useCallback((transform: TransformRule) => {
+    setTransforms(prev => {
+      const exists = prev.find(t => t.id === transform.id);
+      if (exists) {
+        return prev.map(t => t.id === transform.id ? transform : t);
+      }
+      return [...prev, transform];
+    });
+    setEditingTransform(null);
   }, []);
 
   const handleRemoveTransform = useCallback((id: string) => {
@@ -119,16 +137,15 @@ export const QueryBuilder = () => {
   }, []);
 
   // Sort handlers
-  const handleAddSort = useCallback(() => {
-    setSorts(prev => [...prev, {
-      id: crypto.randomUUID(),
-      column: "",
-      ascending: true
-    }]);
-  }, []);
-
-  const handleUpdateSort = useCallback((id: string, updates: Partial<SortRule>) => {
-    setSorts(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  const handleSaveSort = useCallback((sort: SortRule) => {
+    setSorts(prev => {
+      const exists = prev.find(s => s.id === sort.id);
+      if (exists) {
+        return prev.map(s => s.id === sort.id ? sort : s);
+      }
+      return [...prev, sort];
+    });
+    setEditingSort(null);
   }, []);
 
   const handleRemoveSort = useCallback((id: string) => {
@@ -145,23 +162,21 @@ export const QueryBuilder = () => {
     }));
   }, []);
 
-  const handleAddAggregation = useCallback(() => {
-    setGroupBy(prev => ({
-      ...prev,
-      aggregations: [...prev.aggregations, {
-        id: crypto.randomUUID(),
-        function: "Sum" as AggFunc,
-        column: "",
-        alias: undefined
-      }]
-    }));
-  }, []);
-
-  const handleUpdateAggregation = useCallback((id: string, updates: Partial<Aggregation>) => {
-    setGroupBy(prev => ({
-      ...prev,
-      aggregations: prev.aggregations.map(a => a.id === id ? { ...a, ...updates } : a)
-    }));
+  const handleSaveAggregation = useCallback((agg: Aggregation) => {
+    setGroupBy(prev => {
+      const exists = prev.aggregations.find(a => a.id === agg.id);
+      if (exists) {
+        return {
+          ...prev,
+          aggregations: prev.aggregations.map(a => a.id === agg.id ? agg : a)
+        };
+      }
+      return {
+        ...prev,
+        aggregations: [...prev.aggregations, agg]
+      };
+    });
+    setEditingAgg(null);
   }, []);
 
   const handleRemoveAggregation = useCallback((id: string) => {
@@ -169,6 +184,16 @@ export const QueryBuilder = () => {
       ...prev,
       aggregations: prev.aggregations.filter(a => a.id !== id)
     }));
+  }, []);
+
+  // Run query
+  const handleRunQuery = useCallback(() => {
+    setIsLoading(true);
+    setShowResults(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
   }, []);
 
   return (
@@ -195,7 +220,7 @@ export const QueryBuilder = () => {
               <Download size={16} />
               Export
             </Button>
-            <Button variant="bus" size="sm">
+            <Button variant="bus" size="sm" onClick={handleRunQuery}>
               <Play size={16} />
               Run Query
             </Button>
@@ -206,38 +231,46 @@ export const QueryBuilder = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Sidebar - Operations */}
-          <aside className="lg:col-span-3 space-y-4">
-            <ColumnSelector
+          {/* Left Sidebar - All Operations */}
+          <aside className="lg:col-span-3">
+            <OperationsSidebar
               columns={columns}
               selectedColumns={selectedColumns}
-              onToggle={handleToggleColumn}
-              onSelectAll={handleSelectAllColumns}
-              onDeselectAll={handleDeselectAllColumns}
-            />
-            <FilterPanel
-              columns={columns}
+              onToggleColumn={handleToggleColumn}
+              onSelectAllColumns={handleSelectAllColumns}
+              onDeselectAllColumns={handleDeselectAllColumns}
               filters={filters}
-              onAddFilter={handleAddFilter}
-              onUpdateFilter={handleUpdateFilter}
+              onAddFilter={() => { setEditingFilter(null); setFilterModalOpen(true); }}
+              onEditFilter={(f) => { setEditingFilter(f); setFilterModalOpen(true); }}
               onRemoveFilter={handleRemoveFilter}
-            />
-            <TransformPanel
-              columns={columns}
               transforms={transforms}
-              onAddTransform={handleAddTransform}
-              onUpdateTransform={handleUpdateTransform}
+              onAddTransform={() => { setEditingTransform(null); setTransformModalOpen(true); }}
+              onEditTransform={(t) => { setEditingTransform(t); setTransformModalOpen(true); }}
               onRemoveTransform={handleRemoveTransform}
+              sorts={sorts}
+              onAddSort={() => { setEditingSort(null); setSortModalOpen(true); }}
+              onEditSort={(s) => { setEditingSort(s); setSortModalOpen(true); }}
+              onRemoveSort={handleRemoveSort}
+              groupBy={groupBy}
+              onToggleGroupColumn={handleToggleGroupColumn}
+              onAddAggregation={() => { setEditingAgg(null); setAggModalOpen(true); }}
+              onEditAggregation={(a) => { setEditingAgg(a); setAggModalOpen(true); }}
+              onRemoveAggregation={handleRemoveAggregation}
+              limit={limit}
+              totalRows={rows.length}
+              onEditLimit={() => setLimitModalOpen(true)}
+              onClearLimit={() => setLimit(null)}
             />
           </aside>
 
-          {/* Center - Results & Query */}
-          <section className="lg:col-span-6 space-y-4">
-            <ResultsPreview
+          {/* Center - CSV Preview, Query Preview & Results */}
+          <section className="lg:col-span-9 space-y-4">
+            <CSVPreviewPanel
               headers={columns}
               rows={rows}
-              selectedColumns={selectedColumns}
+              fileName={tableName}
             />
+            
             <QueryPreview
               selectedColumns={selectedColumns}
               filters={filters}
@@ -247,33 +280,59 @@ export const QueryBuilder = () => {
               limit={limit}
               tableName={tableName}
             />
-          </section>
 
-          {/* Right Sidebar - GroupBy, Sort & Limit */}
-          <aside className="lg:col-span-3 space-y-4">
-            <GroupByPanel
-              availableColumns={columns}
-              groupBy={groupBy}
-              onToggleGroupColumn={handleToggleGroupColumn}
-              onAddAggregation={handleAddAggregation}
-              onUpdateAggregation={handleUpdateAggregation}
-              onRemoveAggregation={handleRemoveAggregation}
-            />
-            <SortPanel
-              columns={columns}
-              sorts={sorts}
-              onAddSort={handleAddSort}
-              onUpdateSort={handleUpdateSort}
-              onRemoveSort={handleRemoveSort}
-            />
-            <LimitPanel
-              limit={limit}
-              totalRows={rows.length}
-              onLimitChange={setLimit}
-            />
-          </aside>
+            {showResults && (
+              <ResultsPreview
+                headers={columns}
+                rows={rows}
+                selectedColumns={selectedColumns}
+                isLoading={isLoading}
+              />
+            )}
+          </section>
         </div>
       </main>
+
+      {/* Modals */}
+      <FilterModal
+        open={filterModalOpen}
+        onOpenChange={setFilterModalOpen}
+        columns={columns}
+        filter={editingFilter}
+        onSave={handleSaveFilter}
+      />
+
+      <TransformModal
+        open={transformModalOpen}
+        onOpenChange={setTransformModalOpen}
+        columns={columns}
+        transform={editingTransform}
+        onSave={handleSaveTransform}
+      />
+
+      <SortModal
+        open={sortModalOpen}
+        onOpenChange={setSortModalOpen}
+        columns={columns}
+        sort={editingSort}
+        onSave={handleSaveSort}
+      />
+
+      <AggregationModal
+        open={aggModalOpen}
+        onOpenChange={setAggModalOpen}
+        columns={columns}
+        aggregation={editingAgg}
+        onSave={handleSaveAggregation}
+      />
+
+      <LimitModal
+        open={limitModalOpen}
+        onOpenChange={setLimitModalOpen}
+        limit={limit}
+        totalRows={rows.length}
+        onSave={setLimit}
+      />
     </div>
   );
 };

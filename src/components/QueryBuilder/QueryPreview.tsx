@@ -1,10 +1,10 @@
 import { Code, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { FilterRule, FilterOp } from "./FilterPanel";
-import { TransformRule } from "./TransformPanel";
-import { SortRule } from "./SortPanel";
-import { GroupByRule } from "./GroupByPanel";
+import { FilterRule, FilterOp } from "./FilterModal";
+import { TransformRule } from "./TransformModal";
+import { SortRule } from "./SortModal";
+import { GroupByRule } from "./OperationsSidebar";
 
 interface QueryPreviewProps {
   selectedColumns: string[];
@@ -127,7 +127,7 @@ export const QueryPreview = ({
         </Button>
       </div>
 
-      <pre className="bg-muted/50 rounded-lg p-4 text-sm font-mono text-foreground/90 overflow-x-auto scrollbar-thin max-h-64 overflow-y-auto">
+      <pre className="bg-muted/50 rounded-lg p-4 text-sm font-mono text-foreground/90 overflow-x-auto scrollbar-thin max-h-48 overflow-y-auto">
         <code>{queryJson}</code>
       </pre>
     </div>
