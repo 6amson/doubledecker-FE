@@ -13,11 +13,8 @@ export const Logo = ({ size = "md" }: LogoProps) => {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="relative">
-        <div className="absolute inset-0 bg-primary/30 blur-xl rounded-full animate-pulse-glow" />
-        <div className="relative bg-primary rounded-xl p-2 red-glow">
-          <Bus size={sizes[size].icon} className="text-primary-foreground" />
-        </div>
+      <div className="bg-primary rounded-xl p-2">
+        <Bus size={sizes[size].icon} className="text-primary-foreground" />
       </div>
     </div>
   );

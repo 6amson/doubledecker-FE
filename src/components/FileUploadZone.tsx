@@ -62,11 +62,8 @@ export const FileUploadZone = ({ onFileSelect }: FileUploadZoneProps) => {
             onChange={handleFileInput}
             className="hidden"
           />
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-            <div className="relative bg-secondary rounded-2xl p-6">
-              <Upload size={40} className="text-muted-foreground" />
-            </div>
+          <div className="bg-secondary rounded-2xl p-6 mb-6">
+            <Upload size={40} className="text-muted-foreground" />
           </div>
           <h3 className="font-display text-xl font-semibold text-foreground mb-2">
             Drop your CSV here
