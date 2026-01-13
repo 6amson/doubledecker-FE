@@ -26,7 +26,29 @@ export const CSVPreviewPanel = ({ headers, rows, fileName = "uploaded_data.csv",
   
   return (
     <div className="query-panel">
-      {/* Table Preview - No header text, just the table */}
+      {/* Metadata Section - Above table */}
+      <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet size={14} />
+          <span className="text-foreground/80">{fileName}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Database size={14} />
+          <span>{totalRows.toLocaleString()} rows</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Columns3 size={14} />
+          <span>{totalColumns} columns</span>
+        </div>
+        {fileSize && (
+          <div className="flex items-center gap-2">
+            <HardDrive size={14} />
+            <span>{formatFileSize(fileSize)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Table Preview */}
       <div className="overflow-x-auto rounded-lg border border-border">
         <div className="min-w-max">
           <Table>
@@ -52,28 +74,6 @@ export const CSVPreviewPanel = ({ headers, rows, fileName = "uploaded_data.csv",
             </TableBody>
           </Table>
         </div>
-      </div>
-
-      {/* Metadata Section */}
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <FileSpreadsheet size={14} />
-          <span className="text-foreground/80">{fileName}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Database size={14} />
-          <span>{totalRows.toLocaleString()} rows</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Columns3 size={14} />
-          <span>{totalColumns} columns</span>
-        </div>
-        {fileSize && (
-          <div className="flex items-center gap-2">
-            <HardDrive size={14} />
-            <span>{formatFileSize(fileSize)}</span>
-          </div>
-        )}
       </div>
     </div>
   );
