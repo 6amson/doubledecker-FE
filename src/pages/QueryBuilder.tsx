@@ -10,8 +10,7 @@ import { AggregationModal, Aggregation, AggFunc } from "@/components/QueryBuilde
 import { LimitModal } from "@/components/QueryBuilder/LimitModal";
 import { CSVPreviewPanel } from "@/components/QueryBuilder/CSVPreviewPanel";
 import { QueryPreview } from "@/components/QueryBuilder/QueryPreview";
-import { ResultsPreview } from "@/components/QueryBuilder/ResultsPreview";
-import { ArrowLeft, Play, Download, Save } from "lucide-react";
+import { ArrowLeft, Play, Save } from "lucide-react";
 
 // Mock data for demo
 const mockColumns = ["id", "name", "email", "company", "revenue", "country", "created_at", "status"];
@@ -57,10 +56,6 @@ export const QueryBuilder = () => {
   const [editingAgg, setEditingAgg] = useState<Aggregation | null>(null);
   
   const [limitModalOpen, setLimitModalOpen] = useState(false);
-
-  // Results state
-  const [showResults, setShowResults] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const tableName = file?.name?.replace('.csv', '') || "uploaded_data";
 
@@ -186,15 +181,17 @@ export const QueryBuilder = () => {
     }));
   }, []);
 
-  // Run query
+  // Run query - navigate to results page
   const handleRunQuery = useCallback(() => {
-    setIsLoading(true);
-    setShowResults(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    navigate("/query-results", {
+      state: {
+        headers: columns,
+        rows,
+        selectedColumns,
+        tableName
+      }
+    });
+  }, [navigate, columns, rows, selectedColumns, tableName]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -215,10 +212,6 @@ export const QueryBuilder = () => {
             <Button variant="outline" size="sm">
               <Save size={16} />
               Save Query
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download size={16} />
-              Export
             </Button>
             <Button variant="bus" size="sm" onClick={handleRunQuery}>
               <Play size={16} />
@@ -281,14 +274,6 @@ export const QueryBuilder = () => {
               tableName={tableName}
             />
 
-            {showResults && (
-              <ResultsPreview
-                headers={columns}
-                rows={rows}
-                selectedColumns={selectedColumns}
-                isLoading={isLoading}
-              />
-            )}
           </section>
         </div>
       </main>

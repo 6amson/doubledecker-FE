@@ -5,19 +5,23 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import QueryBuilder from "./pages/QueryBuilder";
+import QueryResults from "./pages/QueryResults";
 import NotFound from "./pages/NotFound";
+import { MobileBlocker } from "./components/MobileBlocker";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <MobileBlocker />
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/query-builder" element={<QueryBuilder />} />
+          <Route path="/query-results" element={<QueryResults />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
