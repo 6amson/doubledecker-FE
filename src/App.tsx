@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import QueryBuilder from "./pages/QueryBuilder";
 import QueryResults from "./pages/QueryResults";
+import SavedQueries from "./pages/SavedQueries";
 import NotFound from "./pages/NotFound";
 import { MobileBlocker } from "./components/MobileBlocker";
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/query-builder" element={<QueryBuilder />} />
           <Route path="/query-results" element={<QueryResults />} />
+          <Route path="/saved-queries" element={<SavedQueries />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

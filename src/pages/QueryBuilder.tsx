@@ -3,14 +3,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { OperationsSidebar, GroupByRule } from "@/components/QueryBuilder/OperationsSidebar";
-import { FilterModal, FilterRule, FilterOp } from "@/components/QueryBuilder/FilterModal";
-import { TransformModal, TransformRule, TransformOp } from "@/components/QueryBuilder/TransformModal";
+import { FilterModal, FilterRule } from "@/components/QueryBuilder/FilterModal";
+import { TransformModal, TransformRule } from "@/components/QueryBuilder/TransformModal";
 import { SortModal, SortRule } from "@/components/QueryBuilder/SortModal";
-import { AggregationModal, Aggregation, AggFunc } from "@/components/QueryBuilder/AggregationModal";
+import { AggregationModal, Aggregation } from "@/components/QueryBuilder/AggregationModal";
 import { LimitModal } from "@/components/QueryBuilder/LimitModal";
+import { SaveQueryModal } from "@/components/QueryBuilder/SaveQueryModal";
+import { LoadQueryModal } from "@/components/QueryBuilder/LoadQueryModal";
 import { CSVPreviewPanel } from "@/components/QueryBuilder/CSVPreviewPanel";
 import { QueryPreview } from "@/components/QueryBuilder/QueryPreview";
-import { ArrowLeft, Play, Save } from "lucide-react";
+import { ArrowLeft, Play, Save, FolderOpen } from "lucide-react";
+import { saveQuery, SavedQuery } from "@/lib/savedQueries";
+import { toast } from "sonner";
 
 // Mock data for demo
 const mockColumns = ["id", "name", "email", "company", "revenue", "country", "created_at", "status"];
@@ -56,6 +60,9 @@ export const QueryBuilder = () => {
   const [editingAgg, setEditingAgg] = useState<Aggregation | null>(null);
   
   const [limitModalOpen, setLimitModalOpen] = useState(false);
+  
+  const [saveQueryModalOpen, setSaveQueryModalOpen] = useState(false);
+  const [loadQueryModalOpen, setLoadQueryModalOpen] = useState(false);
 
   const tableName = file?.name?.replace('.csv', '') || "uploaded_data";
 
@@ -193,6 +200,33 @@ export const QueryBuilder = () => {
     });
   }, [navigate, columns, rows, selectedColumns, tableName]);
 
+  // Save query handler
+  const handleSaveQuery = useCallback((name: string, description: string) => {
+    saveQuery({
+      name,
+      description,
+      selectedColumns,
+      filters,
+      transforms,
+      sorts,
+      groupBy,
+      limit,
+      originalColumns: columns,
+    });
+    toast.success("Query saved successfully!");
+  }, [selectedColumns, filters, transforms, sorts, groupBy, limit, columns]);
+
+  // Load query handler
+  const handleLoadQuery = useCallback((query: SavedQuery) => {
+    setSelectedColumns(query.selectedColumns);
+    setFilters(query.filters);
+    setTransforms(query.transforms);
+    setSorts(query.sorts);
+    setGroupBy(query.groupBy);
+    setLimit(query.limit);
+    toast.success(`Loaded query: ${query.name}`);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -209,7 +243,11 @@ export const QueryBuilder = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setLoadQueryModalOpen(true)}>
+              <FolderOpen size={16} />
+              Load Query
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setSaveQueryModalOpen(true)}>
               <Save size={16} />
               Save Query
             </Button>
@@ -317,6 +355,19 @@ export const QueryBuilder = () => {
         limit={limit}
         totalRows={rows.length}
         onSave={setLimit}
+      />
+
+      <SaveQueryModal
+        open={saveQueryModalOpen}
+        onOpenChange={setSaveQueryModalOpen}
+        onSave={handleSaveQuery}
+      />
+
+      <LoadQueryModal
+        open={loadQueryModalOpen}
+        onOpenChange={setLoadQueryModalOpen}
+        currentColumns={columns}
+        onLoad={handleLoadQuery}
       />
     </div>
   );
