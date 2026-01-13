@@ -3,10 +3,14 @@ import { Logo } from "./Logo";
 
 export const MobileBlocker = () => {
   return (
-    <div className="fixed inset-0 bg-background z-[100] flex items-center justify-center p-6 lg:hidden">
-      <div className="max-w-md text-center space-y-8">
-        {/* Logo */}
-        <Logo size="lg" />
+    <div className="fixed inset-0 bg-background z-[100] lg:hidden">
+      {/* Logo - Top Left */}
+      <div className="absolute top-4 left-4">
+        <Logo size="md" />
+      </div>
+      
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="max-w-md text-center space-y-8">
 
         {/* Illustration */}
         <div className="relative">
@@ -72,6 +76,7 @@ export const MobileBlocker = () => {
         {/* Decorative bottom */}
         <div className="pt-4">
           <div className="h-1 w-24 mx-auto bg-gradient-to-r from-transparent via-primary to-transparent rounded-full" />
+        </div>
         </div>
       </div>
     </div>
