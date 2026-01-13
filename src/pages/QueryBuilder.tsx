@@ -238,10 +238,6 @@ export const QueryBuilder = () => {
               <ArrowLeft size={20} />
             </Button>
             <Logo size="sm" />
-            <div className="hidden md:flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-medium">{tableName}</span>
-            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={() => setLoadQueryModalOpen(true)}>
