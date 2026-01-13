@@ -15,6 +15,7 @@ import { QueryPreview } from "@/components/QueryBuilder/QueryPreview";
 import { ArrowLeft, Play, Save, FolderOpen } from "lucide-react";
 import { saveQuery, SavedQuery } from "@/lib/savedQueries";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Mock data for demo
 const mockColumns = ["id", "name", "email", "company", "revenue", "country", "created_at", "status"];
@@ -243,6 +244,7 @@ export const QueryBuilder = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Button variant="outline" size="sm" onClick={() => setLoadQueryModalOpen(true)}>
               <FolderOpen size={16} />
               Load Query
