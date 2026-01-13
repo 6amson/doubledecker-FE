@@ -3,10 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { ColumnSelector } from "@/components/QueryBuilder/ColumnSelector";
-import { FilterPanel, FilterRule } from "@/components/QueryBuilder/FilterPanel";
-import { TransformPanel, TransformRule } from "@/components/QueryBuilder/TransformPanel";
+import { FilterPanel, FilterRule, FilterOp } from "@/components/QueryBuilder/FilterPanel";
+import { TransformPanel, TransformRule, TransformOp } from "@/components/QueryBuilder/TransformPanel";
 import { SortPanel, SortRule } from "@/components/QueryBuilder/SortPanel";
 import { LimitPanel } from "@/components/QueryBuilder/LimitPanel";
+import { GroupByPanel, GroupByRule, Aggregation, AggFunc } from "@/components/QueryBuilder/GroupByPanel";
 import { QueryPreview } from "@/components/QueryBuilder/QueryPreview";
 import { ResultsPreview } from "@/components/QueryBuilder/ResultsPreview";
 import { ArrowLeft, Play, Download, Save } from "lucide-react";
@@ -35,6 +36,7 @@ export const QueryBuilder = () => {
   const [filters, setFilters] = useState<FilterRule[]>([]);
   const [transforms, setTransforms] = useState<TransformRule[]>([]);
   const [sorts, setSorts] = useState<SortRule[]>([]);
+  const [groupBy, setGroupBy] = useState<GroupByRule>({ columns: [], aggregations: [] });
   const [limit, setLimit] = useState<number | null>(null);
 
   const tableName = file?.name?.replace('.csv', '') || "uploaded_data";
@@ -84,7 +86,7 @@ export const QueryBuilder = () => {
     setFilters(prev => [...prev, {
       id: crypto.randomUUID(),
       column: "",
-      operator: "equals",
+      operator: "Eq" as FilterOp,
       value: ""
     }]);
   }, []);
@@ -102,7 +104,9 @@ export const QueryBuilder = () => {
     setTransforms(prev => [...prev, {
       id: crypto.randomUUID(),
       column: "",
-      operation: "uppercase"
+      operation: "Multiply" as TransformOp,
+      value: 0,
+      alias: ""
     }]);
   }, []);
 
@@ -119,7 +123,7 @@ export const QueryBuilder = () => {
     setSorts(prev => [...prev, {
       id: crypto.randomUUID(),
       column: "",
-      direction: "asc"
+      ascending: true
     }]);
   }, []);
 
@@ -129,6 +133,42 @@ export const QueryBuilder = () => {
 
   const handleRemoveSort = useCallback((id: string) => {
     setSorts(prev => prev.filter(s => s.id !== id));
+  }, []);
+
+  // GroupBy handlers
+  const handleToggleGroupColumn = useCallback((column: string) => {
+    setGroupBy(prev => ({
+      ...prev,
+      columns: prev.columns.includes(column)
+        ? prev.columns.filter(c => c !== column)
+        : [...prev.columns, column]
+    }));
+  }, []);
+
+  const handleAddAggregation = useCallback(() => {
+    setGroupBy(prev => ({
+      ...prev,
+      aggregations: [...prev.aggregations, {
+        id: crypto.randomUUID(),
+        function: "Sum" as AggFunc,
+        column: "",
+        alias: undefined
+      }]
+    }));
+  }, []);
+
+  const handleUpdateAggregation = useCallback((id: string, updates: Partial<Aggregation>) => {
+    setGroupBy(prev => ({
+      ...prev,
+      aggregations: prev.aggregations.map(a => a.id === id ? { ...a, ...updates } : a)
+    }));
+  }, []);
+
+  const handleRemoveAggregation = useCallback((id: string) => {
+    setGroupBy(prev => ({
+      ...prev,
+      aggregations: prev.aggregations.filter(a => a.id !== id)
+    }));
   }, []);
 
   return (
@@ -203,13 +243,22 @@ export const QueryBuilder = () => {
               filters={filters}
               transforms={transforms}
               sorts={sorts}
+              groupBy={groupBy}
               limit={limit}
               tableName={tableName}
             />
           </section>
 
-          {/* Right Sidebar - Sort & Limit */}
+          {/* Right Sidebar - GroupBy, Sort & Limit */}
           <aside className="lg:col-span-3 space-y-4">
+            <GroupByPanel
+              availableColumns={columns}
+              groupBy={groupBy}
+              onToggleGroupColumn={handleToggleGroupColumn}
+              onAddAggregation={handleAddAggregation}
+              onUpdateAggregation={handleUpdateAggregation}
+              onRemoveAggregation={handleRemoveAggregation}
+            />
             <SortPanel
               columns={columns}
               sorts={sorts}

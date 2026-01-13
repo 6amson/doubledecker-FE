@@ -9,11 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export type TransformOp = "Multiply" | "Divide" | "Add" | "Subtract";
+
 export interface TransformRule {
   id: string;
   column: string;
-  operation: string;
-  newColumnName?: string;
+  operation: TransformOp;
+  value: number;
+  alias: string;
 }
 
 interface TransformPanelProps {
@@ -24,16 +27,11 @@ interface TransformPanelProps {
   onRemoveTransform: (id: string) => void;
 }
 
-const operations = [
-  { value: "uppercase", label: "UPPERCASE" },
-  { value: "lowercase", label: "lowercase" },
-  { value: "trim", label: "Trim whitespace" },
-  { value: "round", label: "Round numbers" },
-  { value: "abs", label: "Absolute value" },
-  { value: "length", label: "String length" },
-  { value: "date_format", label: "Format date" },
-  { value: "extract_year", label: "Extract year" },
-  { value: "extract_month", label: "Extract month" },
+const operations: { value: TransformOp; label: string; symbol: string }[] = [
+  { value: "Multiply", label: "Multiply", symbol: "×" },
+  { value: "Divide", label: "Divide", symbol: "÷" },
+  { value: "Add", label: "Add", symbol: "+" },
+  { value: "Subtract", label: "Subtract", symbol: "−" },
 ];
 
 export const TransformPanel = ({
@@ -87,19 +85,27 @@ export const TransformPanel = ({
                 <div className="flex gap-2">
                   <Select
                     value={transform.operation}
-                    onValueChange={(value) => onUpdateTransform(transform.id, { operation: value })}
+                    onValueChange={(value) => onUpdateTransform(transform.id, { operation: value as TransformOp })}
                   >
-                    <SelectTrigger className="h-9 bg-muted border-none flex-1">
-                      <SelectValue placeholder="Operation" />
+                    <SelectTrigger className="h-9 bg-muted border-none w-24">
+                      <SelectValue placeholder="Op" />
                     </SelectTrigger>
                     <SelectContent>
                       {operations.map((op) => (
                         <SelectItem key={op.value} value={op.value}>
-                          {op.label}
+                          {op.symbol} {op.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+
+                  <Input
+                    type="number"
+                    placeholder="Value"
+                    value={transform.value || ""}
+                    onChange={(e) => onUpdateTransform(transform.id, { value: parseFloat(e.target.value) || 0 })}
+                    className="h-9 bg-muted border-none w-20"
+                  />
 
                   <Button
                     variant="ghost"
@@ -110,6 +116,13 @@ export const TransformPanel = ({
                     <X size={14} />
                   </Button>
                 </div>
+
+                <Input
+                  placeholder="Alias (new column name)"
+                  value={transform.alias}
+                  onChange={(e) => onUpdateTransform(transform.id, { alias: e.target.value })}
+                  className="h-9 bg-muted border-none"
+                />
               </div>
             </div>
           ))}
