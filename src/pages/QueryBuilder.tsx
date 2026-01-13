@@ -299,7 +299,6 @@ export const QueryBuilder = () => {
             <CSVPreviewPanel
               headers={columns}
               rows={rows}
-              fileName={tableName}
             />
             
             <QueryPreview
