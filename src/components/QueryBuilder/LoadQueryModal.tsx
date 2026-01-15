@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FolderOpen, ChevronLeft, ChevronRight, AlertTriangle, Calendar, Filter, ArrowUpDown, Columns, Trash2 } from "lucide-react";
-import { SavedQuery, getSavedQueries, validateQueryAgainstColumns, deleteQuery } from "@/lib/savedQueries";
+import { FolderOpen, ChevronLeft, ChevronRight, Calendar, Filter, ArrowUpDown, Columns, Trash2, FileSpreadsheet } from "lucide-react";
+import { SavedQuery } from "@/types/api";
+import { savedQueriesService } from "@/services/api";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface LoadQueryModalProps {
   open: boolean;
@@ -20,16 +21,28 @@ export const LoadQueryModal = ({ open, onOpenChange, currentColumns, onLoad }: L
   const [queries, setQueries] = useState<SavedQuery[]>([]);
   const [selectedQuery, setSelectedQuery] = useState<SavedQuery | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setQueries(getSavedQueries());
+      loadQueries();
       setSelectedQuery(null);
       setCurrentPage(1);
-      setValidationError(null);
     }
   }, [open]);
+
+  const loadQueries = async () => {
+    setIsLoading(true);
+    try {
+      const data = await savedQueriesService.list();
+      setQueries(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load saved queries");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const totalPages = Math.ceil(queries.length / QUERIES_PER_PAGE);
   const paginatedQueries = useMemo(() => {
@@ -39,46 +52,53 @@ export const LoadQueryModal = ({ open, onOpenChange, currentColumns, onLoad }: L
 
   const handleSelect = (query: SavedQuery) => {
     setSelectedQuery(query);
-    setValidationError(null);
   };
 
   const handleLoad = () => {
     if (!selectedQuery) return;
-
-    const validation = validateQueryAgainstColumns(selectedQuery, currentColumns);
-    
-    if (!validation.isValid) {
-      setValidationError(
-        `Cannot load query: Missing columns in current CSV - ${validation.missingColumns.join(", ")}`
-      );
-      return;
-    }
-
+    // Simplified validation could go here, but for now trusting the user/backend
     onLoad(selectedQuery);
     onOpenChange(false);
   };
 
-  const handleDelete = (e: React.MouseEvent, queryId: string) => {
+  const handleDelete = async (e: React.MouseEvent, queryId: string) => {
     e.stopPropagation();
     if (confirm("Are you sure you want to delete this saved query?")) {
-      deleteQuery(queryId);
-      setQueries(getSavedQueries());
-      if (selectedQuery?.id === queryId) {
-        setSelectedQuery(null);
+      try {
+        await savedQueriesService.delete(queryId);
+        toast.success("Query deleted");
+
+        // Refresh list locally
+        setQueries(prev => prev.filter(q => q.id !== queryId));
+        if (selectedQuery?.id === queryId) {
+          setSelectedQuery(null);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to delete query");
       }
     }
   };
 
   const getQueryStats = (query: SavedQuery) => {
     const stats = [];
-    if (query.selectedColumns.length > 0) {
-      stats.push({ icon: Columns, label: `${query.selectedColumns.length} columns` });
+    const ops = query.query;
+    const selectedCols = ops.filter(o => o.type === 'Select').flatMap(o => (o as any).columns || []);
+    const filters = ops.filter(o => o.type === 'Filter');
+    const sorts = ops.filter(o => o.type === 'Sort');
+    const transforms = ops.filter(o => o.type === 'Transform');
+
+    if (selectedCols.length > 0) {
+      stats.push({ icon: Columns, label: `${selectedCols.length} columns` });
     }
-    if (query.filters.length > 0) {
-      stats.push({ icon: Filter, label: `${query.filters.length} filters` });
+    if (filters.length > 0) {
+      stats.push({ icon: Filter, label: `${filters.length} filters` });
     }
-    if (query.sorts.length > 0) {
-      stats.push({ icon: ArrowUpDown, label: `${query.sorts.length} sorts` });
+    if (sorts.length > 0) {
+      stats.push({ icon: ArrowUpDown, label: `${sorts.length} sorts` });
+    }
+    if (transforms.length > 0) {
+      stats.push({ icon: FileSpreadsheet, label: `${transforms.length} transforms` });
     }
     return stats;
   };
@@ -94,7 +114,9 @@ export const LoadQueryModal = ({ open, onOpenChange, currentColumns, onLoad }: L
         </DialogHeader>
 
         <div className="py-4">
-          {queries.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          ) : queries.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FolderOpen size={48} className="mx-auto mb-4 opacity-50" />
               <p>No saved queries yet</p>
@@ -110,8 +132,8 @@ export const LoadQueryModal = ({ open, onOpenChange, currentColumns, onLoad }: L
                       onClick={() => handleSelect(query)}
                       className={`
                         p-4 rounded-lg border cursor-pointer transition-all
-                        ${selectedQuery?.id === query.id 
-                          ? "border-primary bg-primary/5" 
+                        ${selectedQuery?.id === query.id
+                          ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50 hover:bg-muted/30"
                         }
                       `}
@@ -127,7 +149,7 @@ export const LoadQueryModal = ({ open, onOpenChange, currentColumns, onLoad }: L
                           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar size={12} />
-                              {format(new Date(query.updatedAt), "MMM d, yyyy")}
+                              {format(new Date(query.updated_at || new Date()), "MMM d, yyyy")}
                             </span>
                             {getQueryStats(query).map((stat, i) => (
                               <span key={i} className="flex items-center gap-1">
@@ -179,22 +201,14 @@ export const LoadQueryModal = ({ open, onOpenChange, currentColumns, onLoad }: L
               )}
             </>
           )}
-
-          {validationError && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertTriangle size={16} />
-              <AlertTitle>Column Mismatch</AlertTitle>
-              <AlertDescription>{validationError}</AlertDescription>
-            </Alert>
-          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
-            variant="bus" 
+          <Button
+            variant="bus"
             onClick={handleLoad}
             disabled={!selectedQuery}
           >

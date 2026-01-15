@@ -1,0 +1,30 @@
+Global Design System Keys & Values
+1. Typography
+
+Font Family: Lufga (Custom font via next/font/local)
+Weights: 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold)
+Source: app/layout.tsx -> public/fonts/lufga/
+Font Sizes:
+Defaults: Standard Tailwind sizes (e.g., text-sm: 14px, text-base: 16px).
+Overrides:
+input[type='password']: 20px
+Mobile Table Cells: 12px (content), 11px (header)
+2. Colors (HSL Variables)
+
+Background: 0 0% 100% (White) / Dark: 222.2 84% 4.9%
+Foreground: 222.2 84% 4.9% (Dark Blue/Black) / Dark: 210 40% 98%
+Primary: 353 96% 60% (Pinkish Red)
+Border/Input: 214.3 31.8% 91.4%
+Radius: 0.5rem (Used for border radius)
+3. Border Radius (Curve Radius)
+
+Global Radius Variable: --radius: 0.5rem (8px)
+Classes:
+rounded-lg: 8px (var(--radius))
+rounded-md: 6px (calc(var(--radius) - 2px))
+rounded-sm: 4px (calc(var(--radius) - 4px))
+4. Spacings & Layout
+
+Container Padding: 2rem (horizontal)
+Container Max Width (2xl): 1400px
+Spacings: Standard Tailwind spacing scale (e.g., p-4: 1rem/16px).

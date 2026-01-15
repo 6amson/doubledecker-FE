@@ -1,45 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-
 @layer base {
   :root {
-    /* Light Theme - DoubleDecker */
-    --background: 40 20% 97%;
-    --foreground: 0 0% 12%;
+    /* Light Theme - London Bus Design System */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover-foreground: 222.2 84% 4.9%;
 
     /* London Bus Red */
-    --primary: 0 78% 52%;
+    --primary: 353 96% 60%;
     --primary-foreground: 0 0% 100%;
 
-    /* Light Secondary */
-    --secondary: 40 20% 92%;
-    --secondary-foreground: 0 0% 20%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 40 15% 90%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Cream Accent */
-    --accent: 0 78% 52%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 88%;
-    --input: 40 15% 92%;
-    --ring: 0 78% 52%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 353 96% 60%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
+    /* RESTRORING CUSTOM TOKENS per user request */
     /* Custom DoubleDecker tokens */
     --bus-red: 0 78% 52%;
     --bus-red-hover: 0 78% 45%;
@@ -47,88 +46,88 @@
     --cream: 40 30% 92%;
     --charcoal: 0 0% 12%;
     --charcoal-light: 0 0% 18%;
-    
+
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(0 78% 52%) 0%, hsl(0 70% 40%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(353 96% 60%) 0%, hsl(353 90% 45%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 20% 97%) 100%);
-    --gradient-glow: radial-gradient(circle at center, hsl(0 78% 52% / 0.1) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(circle at center, hsl(353 96% 60% / 0.1) 0%, transparent 70%);
 
     /* Shadows */
     --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.08);
     --shadow-md: 0 4px 20px hsl(0 0% 0% / 0.1);
     --shadow-lg: 0 8px 40px hsl(0 0% 0% / 0.15);
-    --shadow-red: 0 4px 30px hsl(0 78% 52% / 0.2);
+    --shadow-red: 0 4px 30px hsl(353 96% 60% / 0.2);
 
+    /* Sidebar Variables */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 12%;
-    --sidebar-primary: 0 78% 52%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-primary: 353 96% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 20% 95%;
-    --sidebar-accent-foreground: 0 0% 20%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 0 78% 52%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 353 96% 60%;
   }
 
   .dark {
-    /* Dark Theme - DoubleDecker London Bus Inspired */
-    --background: 0 0% 7%;
-    --foreground: 40 20% 95%;
+    /* Dark Theme */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 40 20% 95%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
     /* London Bus Red */
-    --primary: 0 78% 52%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 353 96% 60%;
+    --primary-foreground: 210 40% 98%;
 
-    /* Charcoal Secondary */
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 40 20% 90%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    /* Cream Accent */
-    --accent: 40 30% 90%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 18%;
-    --ring: 0 78% 52%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 353 96% 60%;
 
-    /* Custom DoubleDecker tokens */
+    /* Custom Tokens - Dark */
     --bus-red: 0 78% 52%;
     --bus-red-hover: 0 78% 45%;
     --bus-red-glow: 0 78% 52%;
     --cream: 40 30% 92%;
     --charcoal: 0 0% 12%;
     --charcoal-light: 0 0% 18%;
-    
+
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(0 78% 52%) 0%, hsl(0 70% 40%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(353 96% 60%) 0%, hsl(353 90% 45%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
-    --gradient-glow: radial-gradient(circle at center, hsl(0 78% 52% / 0.15) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(circle at center, hsl(353 96% 60% / 0.15) 0%, transparent 70%);
 
     /* Shadows */
     --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 20px hsl(0 0% 0% / 0.4);
     --shadow-lg: 0 8px 40px hsl(0 0% 0% / 0.5);
-    --shadow-red: 0 4px 30px hsl(0 78% 52% / 0.3);
+    --shadow-red: 0 4px 30px hsl(353 96% 60% / 0.3);
 
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 40 20% 95%;
-    --sidebar-primary: 0 78% 52%;
+    /* Sidebar - Dark */
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 353 96% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 40 20% 90%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 0 78% 52%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 353 96% 60%;
   }
 }
 
@@ -138,15 +137,36 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Outfit', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
+  /* Overrides */
+  input[type='password'] {
+    font-size: 20px;
+    letter-spacing: 0.1em;
+  }
+
+  .mobile-table-cell {
+    font-size: 12px;
+  }
+
+  .mobile-table-header {
+    font-size: 11px;
+  }
+
+  @media (max-width: 640px) {
+    td {
+      font-size: 12px;
+    }
+
+    th {
+      font-size: 11px;
+    }
   }
 }
 
+/* KEEPING COMPONENTS LAYER FROM ORIGIN */
 @layer components {
   .glass-card {
     @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl;

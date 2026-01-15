@@ -13,7 +13,9 @@ import { LoadQueryModal } from "@/components/QueryBuilder/LoadQueryModal";
 import { CSVPreviewPanel } from "@/components/QueryBuilder/CSVPreviewPanel";
 import { QueryPreview } from "@/components/QueryBuilder/QueryPreview";
 import { Play, Save, FolderOpen } from "lucide-react";
-import { saveQuery, SavedQuery } from "@/lib/savedQueries";
+import { SavedQuery } from "@/types/api";
+import { queryService, savedQueriesService } from "@/services/api";
+import { Operation, FilterOp, TransformOp, AggFunc } from "@/types/api";
 import { toast } from "sonner";
 
 // Mock data for demo
@@ -37,7 +39,7 @@ export const QueryBuilder = () => {
   // Data state
   const [columns, setColumns] = useState<string[]>(mockColumns);
   const [rows, setRows] = useState<string[][]>(mockRows);
-  
+
   // Query state
   const [selectedColumns, setSelectedColumns] = useState<string[]>(mockColumns);
   const [filters, setFilters] = useState<FilterRule[]>([]);
@@ -49,22 +51,24 @@ export const QueryBuilder = () => {
   // Modal state
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [editingFilter, setEditingFilter] = useState<FilterRule | null>(null);
-  
+
   const [transformModalOpen, setTransformModalOpen] = useState(false);
   const [editingTransform, setEditingTransform] = useState<TransformRule | null>(null);
-  
+
   const [sortModalOpen, setSortModalOpen] = useState(false);
   const [editingSort, setEditingSort] = useState<SortRule | null>(null);
-  
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const [aggModalOpen, setAggModalOpen] = useState(false);
   const [editingAgg, setEditingAgg] = useState<Aggregation | null>(null);
-  
+
   const [limitModalOpen, setLimitModalOpen] = useState(false);
-  
+
   const [saveQueryModalOpen, setSaveQueryModalOpen] = useState(false);
   const [loadQueryModalOpen, setLoadQueryModalOpen] = useState(false);
 
-  const tableName = file?.name?.replace('.csv', '') || "uploaded_data";
+  const tableName = (location.state?.tableName as string) || file?.name?.replace('.csv', '') || "uploaded_data";
 
   // Parse actual file if provided
   useEffect(() => {
@@ -73,13 +77,13 @@ export const QueryBuilder = () => {
       reader.onload = (e) => {
         const text = e.target?.result as string;
         const lines = text.split('\n').filter(line => line.trim());
-        
+
         if (lines.length > 0) {
           const parsedHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
           setColumns(parsedHeaders);
           setSelectedColumns(parsedHeaders);
-          
-          const dataRows = lines.slice(1).map(line => 
+
+          const dataRows = lines.slice(1).map(line =>
             line.split(',').map(cell => cell.trim().replace(/"/g, ''))
           );
           setRows(dataRows);
@@ -91,8 +95,8 @@ export const QueryBuilder = () => {
 
   // Column handlers
   const handleToggleColumn = useCallback((column: string) => {
-    setSelectedColumns(prev => 
-      prev.includes(column) 
+    setSelectedColumns(prev =>
+      prev.includes(column)
         ? prev.filter(c => c !== column)
         : [...prev, column]
     );
@@ -188,44 +192,178 @@ export const QueryBuilder = () => {
     }));
   }, []);
 
+
   // Run query - navigate to results page
-  const handleRunQuery = useCallback(() => {
-    navigate("/query-results", {
-      state: {
-        headers: columns,
-        rows,
-        selectedColumns,
-        tableName
+  const handleRunQuery = async () => {
+    setIsLoading(true);
+    const toastId = toast.loading("Executing query...");
+
+    try {
+      const operations: Operation[] = [];
+
+      // 1. Filter
+      filters.forEach(f => {
+        operations.push({
+          type: 'Filter',
+          column: f.column,
+          operator: f.operator as FilterOp, // Ensure case matches
+          value: f.value
+        });
+      });
+
+      // 2. Transform
+      transforms.forEach(t => {
+        operations.push({
+          type: 'Transform',
+          column: t.column,
+          operation: t.operation as TransformOp,
+          value: t.value,
+          alias: t.alias
+        });
+      });
+
+      // 3. Group By
+      if (groupBy.columns.length > 0) {
+        operations.push({
+          type: 'GroupBy',
+          columns: groupBy.columns,
+          aggregations: groupBy.aggregations.map(agg => ({
+            function: agg.function as AggFunc,
+            column: agg.column,
+            alias: agg.alias
+          }))
+        });
       }
-    });
-  }, [navigate, columns, rows, selectedColumns, tableName]);
+
+      // 4. Sort
+      sorts.forEach(s => {
+        operations.push({
+          type: 'Sort',
+          column: s.column,
+          ascending: s.ascending
+        });
+      });
+
+      // 5. Select (Project) - logic: if grouped, select is implicit? usually comes last.
+      // If no custom selection, select * (handled by backend usually, or we pass empty).
+      // If we differ from backend's expectation, we might need a distinct Select op.
+      if (selectedColumns.length > 0) {
+        operations.push({ type: 'Select', columns: selectedColumns });
+      }
+
+      // 6. Limit
+      if (limit) {
+        operations.push({ type: 'Limit', count: limit });
+      }
+
+      // Execute
+      const response = await queryService.executeQuery(operations);
+
+      toast.dismiss(toastId);
+      toast.success("Query executed successfully");
+
+      // Transform rows object[] to string[][] for the results page
+      const resultRows = response.rows.map(row =>
+        response.columns.map(col => String(row[col] ?? ''))
+      );
+
+      navigate("/query-results", {
+        state: {
+          headers: response.columns,
+          rows: resultRows,
+          selectedColumns: response.columns, // Result columns are the selected ones
+          tableName
+        }
+      });
+
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error("Query execution failed");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Save query handler
-  const handleSaveQuery = useCallback((name: string, description: string) => {
-    saveQuery({
-      name,
-      description,
-      selectedColumns,
-      filters,
-      transforms,
-      sorts,
-      groupBy,
-      limit,
-      originalColumns: columns,
-    });
-    toast.success("Query saved successfully!");
-  }, [selectedColumns, filters, transforms, sorts, groupBy, limit, columns]);
+  const handleSaveQuery = useCallback(async (name: string, description: string) => {
+    try {
+      const operations: Operation[] = [];
+
+      // Reconstruct operations (share logic with handleRunQuery or just duplicate for now)
+      // 1. Filter
+      filters.forEach(f => operations.push({ type: 'Filter', column: f.column, operator: f.operator as FilterOp, value: f.value }));
+      // 2. Transform
+      transforms.forEach(t => operations.push({ type: 'Transform', column: t.column, operation: t.operation as TransformOp, value: t.value, alias: t.alias }));
+      // 3. Group By
+      if (groupBy.columns.length > 0) {
+        operations.push({
+          type: 'GroupBy',
+          columns: groupBy.columns,
+          aggregations: groupBy.aggregations.map(agg => ({ function: agg.function as AggFunc, column: agg.column, alias: agg.alias }))
+        });
+      }
+      // 4. Sort
+      sorts.forEach(s => operations.push({ type: 'Sort', column: s.column, ascending: s.ascending }));
+      // 5. Select
+      if (selectedColumns.length > 0) operations.push({ type: 'Select', columns: selectedColumns });
+      // 6. Limit
+      if (limit) operations.push({ type: 'Limit', count: limit });
+
+      await savedQueriesService.create(name, description, operations);
+      toast.success("Query saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save query");
+      console.error(error);
+    }
+  }, [selectedColumns, filters, transforms, sorts, groupBy, limit]);
 
   // Load query handler
   const handleLoadQuery = useCallback((query: SavedQuery) => {
-    setSelectedColumns(query.selectedColumns);
-    setFilters(query.filters);
-    setTransforms(query.transforms);
-    setSorts(query.sorts);
-    setGroupBy(query.groupBy);
-    setLimit(query.limit);
+    // Reset defaults first (optional, or just overwrite)
+    let newFilters: FilterRule[] = [];
+    let newTransforms: TransformRule[] = [];
+    let newSorts: SortRule[] = [];
+    let newGroupBy: GroupByRule = { columns: [], aggregations: [] };
+    let newLimit: number | null = null;
+    let newSelectedColumns: string[] = [];
+
+    // Parse operations
+    query.query.forEach((op) => {
+      switch (op.type) {
+        case 'Filter':
+          newFilters.push({ id: crypto.randomUUID(), column: op.column, operator: op.operator, value: op.value });
+          break;
+        case 'Transform':
+          newTransforms.push({ id: crypto.randomUUID(), column: op.column, operation: op.operation, value: op.value, alias: op.alias });
+          break;
+        case 'Sort':
+          newSorts.push({ id: crypto.randomUUID(), column: op.column, ascending: op.ascending });
+          break;
+        case 'GroupBy':
+          newGroupBy = {
+            columns: op.columns,
+            aggregations: op.aggregations.map(agg => ({ id: crypto.randomUUID(), function: agg.function, column: agg.column, alias: agg.alias || '' }))
+          };
+          break;
+        case 'Select':
+          newSelectedColumns = op.columns;
+          break;
+        case 'Limit':
+          newLimit = op.count;
+          break;
+      }
+    });
+
+    setFilters(newFilters);
+    setTransforms(newTransforms);
+    setSorts(newSorts);
+    setGroupBy(newGroupBy);
+    setLimit(newLimit);
+    setSelectedColumns(newSelectedColumns.length > 0 ? newSelectedColumns : columns); // Default to all if none selected? Or respect empty.
+
     toast.success(`Loaded query: ${query.name}`);
-  }, []);
+  }, [columns]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -287,7 +425,7 @@ export const QueryBuilder = () => {
               fileName={file?.name || "uploaded_data.csv"}
               fileSize={file?.size}
             />
-            
+
             <QueryPreview
               selectedColumns={selectedColumns}
               filters={filters}

@@ -22,18 +22,23 @@ export const Header = ({ showBack = false, backTo = "/", children }: HeaderProps
   };
 
   return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-4">
+    <header className="border-b border-border/60 bg-background/80 backdrop-blur-xl sticky top-0 z-50 supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-6">
           <Logo size={showBack ? "sm" : "md"} />
           {showBack && (
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <ArrowLeft size={20} />
+            <div className="h-6 w-px bg-border/60 mx-2" />
+          )}
+          {showBack && (
+            <Button variant="ghost" size="sm" onClick={handleBack} className="text-muted-foreground hover:text-foreground">
+              <ArrowLeft size={16} className="mr-2" />
+              Back
             </Button>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {children}
+          <div className="h-6 w-px bg-border/60 mx-2 hidden sm:block" />
           <ThemeToggle />
         </div>
       </div>

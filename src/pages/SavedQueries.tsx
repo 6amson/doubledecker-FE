@@ -4,12 +4,14 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { 
-  Search, FolderOpen, Calendar, Filter, ArrowUpDown, 
-  Columns, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet 
+import {
+  Search, FolderOpen, Calendar, Filter, ArrowUpDown,
+  Columns, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet
 } from "lucide-react";
-import { SavedQuery, getSavedQueries, deleteQuery } from "@/lib/savedQueries";
+import { SavedQuery } from "@/types/api";
+import { savedQueriesService } from "@/services/api";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const QUERIES_PER_PAGE = 10;
 
@@ -18,9 +20,21 @@ export const SavedQueries = () => {
   const [queries, setQueries] = useState<SavedQuery[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setQueries(getSavedQueries());
+    const fetchQueries = async () => {
+      try {
+        const data = await savedQueriesService.list();
+        setQueries(data);
+      } catch (error) {
+        toast.error("Failed to load saved queries");
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchQueries();
   }, []);
 
   const filteredQueries = queries.filter(q =>
@@ -32,26 +46,40 @@ export const SavedQueries = () => {
   const startIndex = (currentPage - 1) * QUERIES_PER_PAGE;
   const paginatedQueries = filteredQueries.slice(startIndex, startIndex + QUERIES_PER_PAGE);
 
-  const handleDelete = (queryId: string) => {
+  const handleDelete = async (queryId: string) => {
     if (confirm("Are you sure you want to delete this saved query?")) {
-      deleteQuery(queryId);
-      setQueries(getSavedQueries());
+      try {
+        await savedQueriesService.delete(queryId);
+        setQueries(prev => prev.filter(q => q.id !== queryId));
+        toast.success("Query deleted");
+      } catch (error) {
+        toast.error("Failed to delete query");
+        console.error(error);
+      }
     }
   };
 
   const getQueryStats = (query: SavedQuery) => {
     const stats = [];
-    if (query.selectedColumns.length > 0) {
-      stats.push({ icon: Columns, label: `${query.selectedColumns.length} cols` });
+
+    // Parse operations to get stats
+    const ops = query.query;
+    const selectedCols = ops.filter(o => o.type === 'Select').flatMap(o => (o as any).columns || []);
+    const filters = ops.filter(o => o.type === 'Filter');
+    const sorts = ops.filter(o => o.type === 'Sort');
+    const transforms = ops.filter(o => o.type === 'Transform');
+
+    if (selectedCols.length > 0) {
+      stats.push({ icon: Columns, label: `${selectedCols.length} cols` });
     }
-    if (query.filters.length > 0) {
-      stats.push({ icon: Filter, label: `${query.filters.length} filters` });
+    if (filters.length > 0) {
+      stats.push({ icon: Filter, label: `${filters.length} filters` });
     }
-    if (query.sorts.length > 0) {
-      stats.push({ icon: ArrowUpDown, label: `${query.sorts.length} sorts` });
+    if (sorts.length > 0) {
+      stats.push({ icon: ArrowUpDown, label: `${sorts.length} sorts` });
     }
-    if (query.transforms.length > 0) {
-      stats.push({ icon: FileSpreadsheet, label: `${query.transforms.length} transforms` });
+    if (transforms.length > 0) {
+      stats.push({ icon: FileSpreadsheet, label: `${transforms.length} transforms` });
     }
     return stats;
   };
@@ -62,9 +90,9 @@ export const SavedQueries = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Saved Queries</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-10">
+          <h1 className="font-display text-4xl font-bold text-foreground mb-2 tracking-tight">Saved Queries</h1>
+          <p className="text-xl text-muted-foreground font-light">
             Manage and reload your saved query configurations
           </p>
         </div>
@@ -111,7 +139,7 @@ export const SavedQueries = () => {
                     <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
-                        Created {format(new Date(query.createdAt), "MMM d, yyyy")}
+                        Created {format(new Date(query.created_at || new Date()), "MMM d, yyyy")}
                       </span>
                       {getQueryStats(query).map((stat, i) => (
                         <span key={i} className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded">
@@ -119,10 +147,6 @@ export const SavedQueries = () => {
                           {stat.label}
                         </span>
                       ))}
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Original columns: {query.originalColumns.slice(0, 5).join(", ")}
-                      {query.originalColumns.length > 5 && ` +${query.originalColumns.length - 5} more`}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
