@@ -41,7 +41,6 @@ export const Login = () => {
 
     return (
         <div className="min-h-screen grid lg:grid-cols-2">
-            {/* Left Side - Form */}
             <div className="flex items-center justify-center p-8 bg-background">
                 <div className="w-full max-w-md space-y-8">
                     <div className="space-y-2">
@@ -122,19 +121,18 @@ export const Login = () => {
                 </div>
             </div>
 
-            {/* Right Side - Visual */}
             <div className="hidden lg:block relative bg-muted overflow-hidden">
                 <div className="absolute inset-0 bg-primary/5 pattern-grid-lg opacity-20" />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-20 space-y-6">
-                    <blockquote className="space-y-2">
-                        <p className="text-lg font-medium leading-relaxed">
-                            "DoubleDecker has completely transformed how we analyze our data. The query builder is intuitive and the results are instant."
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-medium tracking-tight">
+                            Unlock your data's potential
+                        </h2>
+                        <p className="text-lg text-muted-foreground">
+                            Experience the fastest way to query and visualize your data. Built for developers, designed for everyone.
                         </p>
-                        <footer className="text-sm font-semibold text-primary">
-                            Sofia Davis, Data Analyst
-                        </footer>
-                    </blockquote>
+                    </div>
                 </div>
             </div>
         </div>
