@@ -41,3 +41,37 @@ export interface Aggregation {
     column: string;
     alias?: string;
 }
+
+export interface UploadResponse {
+    table_name: string;
+    file_name: string;
+    file_size: number;
+    file_link: string;
+    success: boolean;
+}
+
+export interface Upload {
+    id: string;           // UUID
+    user_id: string;      // UUID
+    file_name: string;    // Original filename
+    s3_key: string;       // S3 storage key (without s3:// prefix)
+    file_size: number;    // Size in bytes
+    file_type: string;    // MIME type
+    table_name: string;   // DataFusion table name
+    created_at: string;   // ISO 8601 timestamp
+    updated_at: string;   // ISO 8601 timestamp
+    file_link: string | null;  // Presigned URL for CSV download
+}
+
+export interface PaginatedResponse<T> {
+    data: T[];           // Array of records
+    total: number;       // Total number of records
+    page: number;        // Current page number
+    page_size: number;   // Items per page
+    total_pages: number; // Total number of pages
+}
+
+export interface PaginationParams {
+    page?: number;       // Default: 1, Min: 1
+    page_size?: number;  // Default: 10, Min: 1, Max: 100
+}

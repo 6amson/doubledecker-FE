@@ -3,7 +3,11 @@ import {
     AuthResponse,
     QueryResponse,
     SavedQuery,
-    Operation
+    Operation,
+    Upload,
+    PaginatedResponse,
+    PaginationParams,
+    UploadResponse
 } from '@/types/api';
 
 export const authService = {
@@ -33,23 +37,29 @@ export const fileService = {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await api.post<string>('/upload', formData, {
+        const response = await api.post<string | { table_name: string }>('/upload', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
-        return response.data;
+
+        // Handle if backend returns object { table_name: "..." } or text string
+        const data = response.data;
+        if (typeof data === 'object' && 'table_name' in data) {
+            return (data as { table_name: string }).table_name;
+        }
+        return String(data);
     },
 };
 
 export const queryService = {
-    executeQuery: async (operations: Operation[]): Promise<QueryResponse> => {
-        const response = await api.post<QueryResponse>('/query', { operations });
+    executeQuery: async (operations: Operation[], table_name?: string): Promise<QueryResponse> => {
+        const response = await api.post<QueryResponse>('/query', { table_name, operations });
         return response.data;
     },
 
-    downloadQueryCSV: async (operations: Operation[], filename = 'query_results.csv'): Promise<void> => {
-        const response = await api.post('/query/download', { operations }, {
+    downloadQueryCSV: async (operations: Operation[], table_name?: string, filename = 'query_results.csv'): Promise<void> => {
+        const response = await api.post('/query/download', { table_name, operations }, {
             responseType: 'blob',
         });
 
@@ -87,6 +97,25 @@ export const savedQueriesService = {
 
     delete: async (id: string): Promise<{ message: string }> => {
         const response = await api.delete<{ message: string }>(`/saved_queries/${id}`);
+        return response.data;
+    },
+};
+
+export const uploadsService = {
+    getRecentUploads: async (params?: PaginationParams): Promise<PaginatedResponse<Upload>> => {
+        const queryParams = new URLSearchParams();
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+
+        const url = `/uploads${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const response = await api.get<PaginatedResponse<Upload>>(url);
+        return response.data;
+    },
+};
+
+export const userService = {
+    getProfile: async () => {
+        const response = await api.get('/profile');
         return response.data;
     },
 };

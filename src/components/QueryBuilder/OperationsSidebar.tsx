@@ -34,32 +34,33 @@ export interface GroupByRule {
 
 interface OperationsSidebarProps {
   columns: string[];
+  availableColumns: string[];
   selectedColumns: string[];
   onToggleColumn: (column: string) => void;
   onSelectAllColumns: () => void;
   onDeselectAllColumns: () => void;
-  
+
   filters: FilterRule[];
   onAddFilter: () => void;
   onEditFilter: (filter: FilterRule) => void;
   onRemoveFilter: (id: string) => void;
-  
+
   transforms: TransformRule[];
   onAddTransform: () => void;
   onEditTransform: (transform: TransformRule) => void;
   onRemoveTransform: (id: string) => void;
-  
+
   sorts: SortRule[];
   onAddSort: () => void;
   onEditSort: (sort: SortRule) => void;
   onRemoveSort: (id: string) => void;
-  
+
   groupBy: GroupByRule;
   onToggleGroupColumn: (column: string) => void;
   onAddAggregation: () => void;
   onEditAggregation: (agg: Aggregation) => void;
   onRemoveAggregation: (id: string) => void;
-  
+
   limit: number | null;
   totalRows: number;
   onEditLimit: () => void;
@@ -85,6 +86,7 @@ const transformLabels: Record<TransformOp, string> = {
 
 export const OperationsSidebar = ({
   columns,
+  availableColumns,
   selectedColumns,
   onToggleColumn,
   onSelectAllColumns,
@@ -129,12 +131,12 @@ export const OperationsSidebar = ({
               <Columns3 size={18} className="text-muted-foreground" />
               <h3 className="font-display font-semibold text-foreground">Select</h3>
               <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
-                {selectedColumns.length}/{columns.length}
+                {selectedColumns.length}/{availableColumns.length}
               </Badge>
             </div>
             <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.columns && "rotate-180")} />
           </CollapsibleTrigger>
-          
+
           <CollapsibleContent className="pt-3">
             <div className="flex gap-2 mb-3">
               <button onClick={onSelectAllColumns} className="text-xs text-foreground/70 hover:text-foreground hover:underline">
@@ -147,7 +149,7 @@ export const OperationsSidebar = ({
             </div>
             <ScrollArea className="h-[140px]">
               <div className="space-y-1">
-                {columns.map((column) => (
+                {availableColumns.map((column) => (
                   <label
                     key={column}
                     className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
@@ -180,9 +182,9 @@ export const OperationsSidebar = ({
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-7 px-2"
                 onClick={(e) => { e.stopPropagation(); onAddFilter(); }}
               >
@@ -191,7 +193,7 @@ export const OperationsSidebar = ({
               <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.filters && "rotate-180")} />
             </div>
           </CollapsibleTrigger>
-          
+
           <CollapsibleContent className="pt-3">
             {filters.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-2">No filters</p>
@@ -244,7 +246,7 @@ export const OperationsSidebar = ({
             </div>
             <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.groupBy && "rotate-180")} />
           </CollapsibleTrigger>
-          
+
           <CollapsibleContent className="pt-3 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground mb-2">Group columns:</p>
@@ -325,9 +327,9 @@ export const OperationsSidebar = ({
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-7 px-2"
                 onClick={(e) => { e.stopPropagation(); onAddTransform(); }}
               >
@@ -336,7 +338,7 @@ export const OperationsSidebar = ({
               <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.transforms && "rotate-180")} />
             </div>
           </CollapsibleTrigger>
-          
+
           <CollapsibleContent className="pt-3">
             {transforms.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-2">No transforms</p>
@@ -388,9 +390,9 @@ export const OperationsSidebar = ({
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-7 px-2"
                 onClick={(e) => { e.stopPropagation(); onAddSort(); }}
               >
@@ -399,7 +401,7 @@ export const OperationsSidebar = ({
               <ChevronDown size={16} className={cn("transition-transform text-muted-foreground", openSections.sorts && "rotate-180")} />
             </div>
           </CollapsibleTrigger>
-          
+
           <CollapsibleContent className="pt-3">
             {sorts.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-2">No sorting</p>
@@ -454,10 +456,10 @@ export const OperationsSidebar = ({
               <Pencil size={14} />
             </Button>
             {limit !== null && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 px-2 text-destructive" 
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-destructive"
                 onClick={onClearLimit}
               >
                 <X size={14} />

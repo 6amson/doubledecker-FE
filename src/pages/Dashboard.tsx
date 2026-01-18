@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { FileUploadZone } from "@/components/FileUploadZone";
@@ -26,28 +26,70 @@ import {
 interface RecentFile {
   id: string;
   name: string;
+  tableName: string;
   rows: number;
   uploadedAt: string;
+  fileLink: string | null;
 }
 
-const mockRecentFiles: RecentFile[] = [
-  { id: "1", name: "sales_2024.csv", rows: 15420, uploadedAt: "2 hours ago" },
-  { id: "2", name: "customers.csv", rows: 8234, uploadedAt: "Yesterday" },
-  { id: "3", name: "inventory_report.csv", rows: 3102, uploadedAt: "3 days ago" },
-];
-
-import { fileService } from "@/services/api";
+import { fileService, uploadsService } from "@/services/api";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Helper function to format relative time
+const formatRelativeTime = (isoDate: string): string => {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString();
+};
+
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth(); 
+  const { user, logout } = useAuth();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [recentFiles, setRecentFiles] = useState<RecentFile[]>(mockRecentFiles);
+  const [recentFiles, setRecentFiles] = useState<RecentFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
+
+  // Fetch recent files on mount
+  useEffect(() => {
+    fetchRecentFiles();
+  }, []);
+
+  const fetchRecentFiles = async () => {
+    try {
+      setIsLoadingFiles(true);
+      const response = await uploadsService.getRecentUploads({ page: 1, page_size: 10 });
+
+      // Transform Upload[] to RecentFile[]
+      const files: RecentFile[] = response.data.map(upload => ({
+        id: upload.id,
+        name: upload.file_name,
+        tableName: upload.table_name,
+        rows: 0, // We don't have row count from backend yet
+        uploadedAt: formatRelativeTime(upload.created_at),
+        fileLink: upload.file_link
+      }));
+
+      setRecentFiles(files);
+    } catch (error) {
+      console.error('Failed to fetch recent files:', error);
+      // Don't show error toast, just keep empty state
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -67,6 +109,9 @@ export const Dashboard = () => {
       toast.success("File uploaded successfully");
       setShowPreview(false);
 
+      // Refresh recent files list (optional, since user navigates away)
+      // fetchRecentFiles();
+
       navigate("/query-builder", {
         state: {
           file: selectedFile,
@@ -77,8 +122,18 @@ export const Dashboard = () => {
       toast.dismiss(toastId);
       toast.error("Failed to upload file");
       console.error(error);
-      setIsUploading(false); 
+      setIsUploading(false);
     }
+  };
+
+  const handleFileClick = (file: RecentFile) => {
+    navigate("/query-builder", {
+      state: {
+        tableName: file.tableName,
+        fileName: file.name,
+        fileLink: file.fileLink
+      }
+    });
   };
 
   const handleDeleteFile = (id: string, e: React.MouseEvent) => {
@@ -157,14 +212,21 @@ export const Dashboard = () => {
                 )}
               </div>
 
-              {/* NOTE: Recent files are still mock data until API is ready */}
-              {hasRecentFiles ? (
+              {/* Recent Files */}
+              {isLoadingFiles ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="bg-secondary/50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <FileSpreadsheet size={32} className="opacity-40" />
+                  </div>
+                  <p className="font-medium text-foreground">Loading recent files...</p>
+                </div>
+              ) : hasRecentFiles ? (
                 <div className="space-y-3">
                   {recentFiles.map((file) => (
                     <div
                       key={file.id}
                       className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/60 transition-all duration-200 cursor-pointer group border border-transparent hover:border-primary/10"
-                      onClick={() => navigate("/query-builder")}
+                      onClick={() => handleFileClick(file)}
                     >
                       <div className="flex items-center gap-4">
                         <div className="bg-background rounded-lg p-2.5 shadow-sm group-hover:shadow-md transition-all">
@@ -175,10 +237,14 @@ export const Dashboard = () => {
                             {file.name}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs text-muted-foreground font-medium">
-                              {file.rows.toLocaleString()} rows
-                            </p>
-                            <span className="text-muted-foreground/40">•</span>
+                            {file.rows > 0 && (
+                              <>
+                                <p className="text-xs text-muted-foreground font-medium">
+                                  {file.rows.toLocaleString()} rows
+                                </p>
+                                <span className="text-muted-foreground/40">•</span>
+                              </>
+                            )}
                             <p className="text-xs text-muted-foreground">
                               {file.uploadedAt}
                             </p>

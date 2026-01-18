@@ -52,26 +52,40 @@ export const AggregationModal = ({
   const [func, setFunc] = useState<AggFunc>(aggregation?.function || "Sum");
   const [column, setColumn] = useState(aggregation?.column || "");
   const [alias, setAlias] = useState(aggregation?.alias || "");
+  const [isManualAlias, setIsManualAlias] = useState(!!aggregation?.alias);
 
   useEffect(() => {
     if (open && aggregation) {
       setFunc(aggregation.function);
       setColumn(aggregation.column);
       setAlias(aggregation.alias || "");
+      setIsManualAlias(!!aggregation.alias);
     } else if (open && !aggregation) {
       setFunc("Sum");
       setColumn("");
       setAlias("");
+      setIsManualAlias(false);
     }
   }, [open, aggregation]);
 
+  // Auto-generate alias if not manually set
+  useEffect(() => {
+    if (open && !isManualAlias && column) {
+      setAlias(`${func}_${column}`);
+    }
+  }, [func, column, isManualAlias, open]);
+
   const handleSave = () => {
     if (!column) return;
+
+    // Ensure alias is set (fallback to auto-generated if somehow empty)
+    const finalAlias = alias || `${func}_${column}`;
+
     onSave({
       id: aggregation?.id || crypto.randomUUID(),
       function: func,
       column,
-      alias: alias || undefined,
+      alias: finalAlias,
     });
     onOpenChange(false);
   };
@@ -122,11 +136,14 @@ export const AggregationModal = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Alias (optional)</label>
+            <label className="text-sm font-medium text-foreground">Alias (required)</label>
             <Input
-              placeholder="e.g., total_revenue"
+              placeholder={`e.g., ${func}_${column || 'column'}`}
               value={alias}
-              onChange={(e) => setAlias(e.target.value)}
+              onChange={(e) => {
+                setAlias(e.target.value);
+                setIsManualAlias(true);
+              }}
               className="bg-muted border-border"
             />
           </div>

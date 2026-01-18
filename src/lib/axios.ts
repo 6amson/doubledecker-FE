@@ -28,9 +28,17 @@ api.interceptors.response.use(
         return response;
     },
     (error) => {
-        // Handle global errors here (e.g., 401 Unauthorized)
+        // Handle 401 Unauthorized - token is invalid or expired
         if (error.response?.status === 401) {
-            // console.log('Unauthorized - redirect to login?');
+            // Clear authentication data
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+
+            // Only redirect if not already on login/signup page
+            const currentPath = window.location.pathname;
+            if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
