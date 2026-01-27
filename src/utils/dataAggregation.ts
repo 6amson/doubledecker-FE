@@ -183,6 +183,47 @@ export function sampleData<T>(
 }
 
 /**
+ * Parse numeric value with support for various formats
+ */
+function parseNumericValue(value: any): number | null {
+    if (value === null || value === undefined || value === '') return null;
+
+    // Convert to string for processing
+    let str = String(value).trim();
+
+    // Remove currency symbols
+    str = str.replace(/[$€£¥]/g, '');
+
+    // Handle percentages
+    const isPercentage = str.endsWith('%');
+    if (isPercentage) {
+        str = str.slice(0, -1);
+    }
+
+    // Remove commas (for large numbers like "1,234,567")
+    str = str.replace(/,/g, '');
+
+    // Parse the number
+    const num = Number(str);
+
+    if (isNaN(num)) return null;
+
+    // If it was a percentage, divide by 100
+    return isPercentage ? num / 100 : num;
+}
+
+/**
+ * Check if column name suggests it's an ID field
+ */
+function isIdColumn(columnName: string): boolean {
+    const lowerName = columnName.toLowerCase();
+    return lowerName.includes('id') ||
+        lowerName.includes('_id') ||
+        lowerName === 'id' ||
+        lowerName.endsWith('_key');
+}
+
+/**
  * Detect column types based on sample data
  */
 export function detectColumnTypes(
@@ -194,13 +235,29 @@ export function detectColumnTypes(
     columns.forEach(col => {
         const sample = rows.slice(0, Math.min(100, rows.length)).map(row => row[col]);
 
-        // Check if numeric
-        const numericCount = sample.filter(v => {
-            const num = Number(v);
-            return !isNaN(num) && v !== null && v !== '' && v !== undefined;
-        }).length;
+        // Check if numeric (with enhanced parsing)
+        const parsedNumbers = sample.map(v => parseNumericValue(v));
+        const numericCount = parsedNumbers.filter(n => n !== null).length;
 
         if (numericCount > sample.length * 0.8) {
+            // It's mostly numeric, but check for categorical edge cases
+
+            // Check if it's an ID column
+            if (isIdColumn(col)) {
+                types[col] = 'categorical';
+                return;
+            }
+
+            // Check for low cardinality (likely categorical like ratings, status codes)
+            const validNumbers = parsedNumbers.filter(n => n !== null) as number[];
+            const uniqueValues = new Set(validNumbers);
+
+            if (uniqueValues.size <= 10 && uniqueValues.size < validNumbers.length * 0.5) {
+                // Low cardinality with many repeats = categorical
+                types[col] = 'categorical';
+                return;
+            }
+
             types[col] = 'numeric';
             return;
         }
@@ -208,8 +265,24 @@ export function detectColumnTypes(
         // Check if temporal
         const dateCount = sample.filter(v => {
             if (!v) return false;
+
+            // Reject pure numbers (avoid false positives)
+            if (typeof v === 'number' || !isNaN(Number(v))) {
+                // Only accept if it looks like a Unix timestamp (10+ digits)
+                const numStr = String(v);
+                if (numStr.length < 10) return false;
+            }
+
             const date = new Date(v);
-            return !isNaN(date.getTime());
+            const isValid = !isNaN(date.getTime());
+
+            // Additional validation: reject dates that are too far in past/future
+            if (isValid) {
+                const year = date.getFullYear();
+                return year >= 1900 && year <= 2100;
+            }
+
+            return false;
         }).length;
 
         if (dateCount > sample.length * 0.8) {

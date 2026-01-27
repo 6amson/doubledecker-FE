@@ -33,6 +33,7 @@ interface TransformModalProps {
   columns: string[];
   transform: TransformRule | null;
   onSave: (transform: TransformRule) => void;
+  originalColumns?: string[]; // Optional: to distinguish transformed columns
 }
 
 const operations: { value: TransformOp; label: string; symbol: string }[] = [
@@ -48,6 +49,7 @@ export const TransformModal = ({
   columns,
   transform,
   onSave,
+  originalColumns = [],
 }: TransformModalProps) => {
   const [column, setColumn] = useState(transform?.column || "");
   const [operation, setOperation] = useState<TransformOp>(transform?.operation || "Multiply");
@@ -98,11 +100,19 @@ export const TransformModal = ({
                 <SelectValue placeholder="Select column" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                {columns.map((col) => (
-                  <SelectItem key={col} value={col}>
-                    {col}
-                  </SelectItem>
-                ))}
+                {columns.filter(col => col && col.trim()).map((col) => {
+                  const isTransformed = originalColumns.length > 0 && !originalColumns.includes(col);
+                  return (
+                    <SelectItem key={col} value={col}>
+                      <div className="flex items-center gap-2">
+                        <span>{col}</span>
+                        {isTransformed && (
+                          <Wand2 size={12} className="text-primary/70" />
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

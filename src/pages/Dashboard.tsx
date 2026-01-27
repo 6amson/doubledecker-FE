@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SavedFilesModal } from "@/components/SavedFilesModal";
 
 interface RecentFile {
   id: string;
@@ -32,7 +33,7 @@ interface RecentFile {
   fileLink: string | null;
 }
 
-import { fileService, uploadsService } from "@/services/api";
+import { fileService, uploadsService, userService } from "@/services/api";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -58,13 +59,20 @@ export const Dashboard = () => {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSavedFilesModal, setShowSavedFilesModal] = useState(false);
   const [recentFiles, setRecentFiles] = useState<RecentFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingFiles, setIsLoadingFiles] = useState(true);
+  const [userStats, setUserStats] = useState({
+    total_saved_queries: 0,
+    total_queries: 0,
+    total_files_processed: 0,
+  });
 
   // Fetch recent files on mount
   useEffect(() => {
     fetchRecentFiles();
+    fetchUserStats();
   }, []);
 
   const fetchRecentFiles = async () => {
@@ -82,12 +90,50 @@ export const Dashboard = () => {
         fileLink: upload.file_link
       }));
 
+      // In real implementation, this should come from API metadata
+      // For now, assume if we got 10 files (default page_size), there might be more
+      const hasMoreFiles = files.length === 10;
+
       setRecentFiles(files);
+      // setIsMoreFilesAvailable(hasMoreFiles); // Could store this in state if needed
     } catch (error) {
       console.error('Failed to fetch recent files:', error);
-      // Don't show error toast, just keep empty state
+      toast.error("Failed to load recent files");
     } finally {
       setIsLoadingFiles(false);
+    }
+  };
+
+  const fetchUserStats = async () => {
+    try {
+      const profile = await userService.getProfile();
+      setUserStats({
+        total_saved_queries: profile.total_saved_queries || 0,
+        total_queries: profile.total_queries || 0,
+        total_files_processed: profile.total_files_processed || 0,
+      });
+    } catch (error) {
+      console.error('Failed to fetch user stats:', error);
+      // Fallback to user object from auth context
+      setUserStats({
+        total_saved_queries: user?.total_saved_queries || 0,
+        total_queries: user?.total_queries || 0,
+        total_files_processed: user?.total_files_processed || 0,
+      });
+    }
+  };
+
+  const handleDeleteFile = async (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation();
+    if (confirm(`Are you sure you want to delete "${name}"?`)) {
+      try {
+        await uploadsService.deleteUpload(id);
+        toast.success("File deleted");
+        fetchRecentFiles(); // Refresh list
+        fetchUserStats();   // Refresh stats
+      } catch (error) {
+        toast.error("Failed to delete file");
+      }
     }
   };
 
@@ -134,11 +180,6 @@ export const Dashboard = () => {
         fileLink: file.fileLink
       }
     });
-  };
-
-  const handleDeleteFile = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRecentFiles(prev => prev.filter(f => f.id !== id));
   };
 
   const hasRecentFiles = recentFiles.length > 0;
@@ -206,13 +247,23 @@ export const Dashboard = () => {
                   <h2 className="font-display text-xl font-semibold text-foreground">Recent Files</h2>
                 </div>
                 {hasRecentFiles && (
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    {recentFiles.length} files
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 px-2 text-muted-foreground hover:text-primary"
+                      onClick={() => setShowSavedFilesModal(true)}
+                    >
+                      See all
+                    </Button>
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
+                      {recentFiles.length > 5 ? '5+' : recentFiles.length} files
+                    </span>
+                  </div>
                 )}
               </div>
 
-              {/* Recent Files */}
+              {/* Recent Files List */}
               {isLoadingFiles ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <div className="bg-secondary/50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 animate-pulse">
@@ -222,13 +273,13 @@ export const Dashboard = () => {
                 </div>
               ) : hasRecentFiles ? (
                 <div className="space-y-3">
-                  {recentFiles.map((file) => (
+                  {recentFiles.slice(0, 5).map((file) => (
                     <div
                       key={file.id}
                       className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/60 transition-all duration-200 cursor-pointer group border border-transparent hover:border-primary/10"
                       onClick={() => handleFileClick(file)}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 flex-1">
                         <div className="bg-background rounded-lg p-2.5 shadow-sm group-hover:shadow-md transition-all">
                           <FileSpreadsheet size={18} className="text-primary" />
                         </div>
@@ -251,14 +302,18 @@ export const Dashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={(e) => handleDeleteFile(file.id, e)}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+
+                      {/* Delete Action */}
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
+                          onClick={(e) => handleDeleteFile(e, file.id, file.name)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -290,7 +345,7 @@ export const Dashboard = () => {
                     <span className="text-sm font-medium text-foreground">Saved Queries</span>
                   </div>
                   <span className="text-lg font-semibold text-foreground font-sans">
-                    {user?.total_saved_queries || 0}
+                    {userStats.total_saved_queries}
                   </span>
                 </div>
                 <div className="flex items-center justify-between group cursor-default">
@@ -301,7 +356,7 @@ export const Dashboard = () => {
                     <span className="text-sm font-medium text-foreground">Queries Run</span>
                   </div>
                   <span className="text-lg font-semibold text-foreground font-sans">
-                    {user?.total_queries || 0}
+                    {userStats.total_queries}
                   </span>
                 </div>
                 <div className="flex items-center justify-between group cursor-default">
@@ -312,7 +367,7 @@ export const Dashboard = () => {
                     <span className="text-sm font-medium text-foreground">Files Processed</span>
                   </div>
                   <span className="text-lg font-semibold text-foreground font-sans">
-                    {user?.total_files_processed || 0}
+                    {userStats.total_files_processed}
                   </span>
                 </div>
               </div>
@@ -362,9 +417,21 @@ export const Dashboard = () => {
         onClose={() => setShowPreview(false)}
         onConfirm={handleConfirm}
         file={selectedFile}
+        isLoading={isUploading}
+      />
+      {/* Saved Files Modal */}
+      <SavedFilesModal
+        isOpen={showSavedFilesModal}
+        onClose={() => setShowSavedFilesModal(false)}
+        onFileSelect={handleFileClick}
+        onFileDeleted={() => {
+          fetchRecentFiles();
+          fetchUserStats();
+        }}
       />
     </div>
   );
 };
+
 
 export default Dashboard;

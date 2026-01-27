@@ -14,7 +14,7 @@ import {
   preparePieChartData,
   prepareScatterPlotData
 } from "@/utils/visualizationPreparers";
-import { suggestVisualization } from "@/utils/dataAggregation";
+import { suggestVisualization, detectColumnTypes } from "@/utils/dataAggregation";
 import { BarChartViz } from "@/components/visualizations/BarChartViz";
 import { LineChartViz } from "@/components/visualizations/LineChartViz";
 import { PieChartViz } from "@/components/visualizations/PieChartViz";
@@ -35,6 +35,16 @@ export const QueryResults = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [vizType, setVizType] = useState<string>('table');
+
+  // User column selections for each visualization type
+  const [barCategoryCol, setBarCategoryCol] = useState<string | undefined>();
+  const [barValueCol, setBarValueCol] = useState<string | undefined>();
+  const [lineDateCol, setLineDateCol] = useState<string | undefined>();
+  const [lineValueCol, setLineValueCol] = useState<string | undefined>();
+  const [pieCategoryCol, setPieCategoryCol] = useState<string | undefined>();
+  const [pieValueCol, setPieValueCol] = useState<string | undefined>();
+  const [scatterXCol, setScatterXCol] = useState<string | undefined>();
+  const [scatterYCol, setScatterYCol] = useState<string | undefined>();
 
   // Fallback if no state
   if (!state) {
@@ -74,6 +84,10 @@ export const QueryResults = () => {
     [rows, headers]
   );
 
+  // Detect column types for smart filtering
+  const columnTypes = useMemo(() => detectColumnTypes(rowObjects, headers), [rowObjects, headers]);
+  const numericColumns = useMemo(() => headers.filter(h => columnTypes[h] === 'numeric'), [headers, columnTypes]);
+  const temporalColumns = useMemo(() => headers.filter(h => columnTypes[h] === 'temporal'), [headers, columnTypes]);
 
   // Detect available visualizations
   const availableViz = useMemo(() =>
@@ -81,25 +95,41 @@ export const QueryResults = () => {
     [rowObjects, headers]
   );
 
-  // Prepare data for each visualization type
+  // Prepare data for each visualization type with user selections
   const barData = useMemo(() =>
-    availableViz.includes('bar') ? prepareBarChartData(rowObjects, headers, { queryMetadata }) : null,
-    [rowObjects, headers, availableViz, queryMetadata]
+    availableViz.includes('bar') ? prepareBarChartData(rowObjects, headers, {
+      categoryColumn: barCategoryCol,
+      valueColumn: barValueCol,
+      queryMetadata
+    }) : null,
+    [rowObjects, headers, availableViz, queryMetadata, barCategoryCol, barValueCol]
   );
 
   const lineData = useMemo(() =>
-    availableViz.includes('line') ? prepareLineChartData(rowObjects, headers, { queryMetadata }) : null,
-    [rowObjects, headers, availableViz, queryMetadata]
+    availableViz.includes('line') ? prepareLineChartData(rowObjects, headers, {
+      timeColumn: lineDateCol,
+      valueColumn: lineValueCol,
+      queryMetadata
+    }) : null,
+    [rowObjects, headers, availableViz, queryMetadata, lineDateCol, lineValueCol]
   );
 
   const pieData = useMemo(() =>
-    availableViz.includes('pie') ? preparePieChartData(rowObjects, headers, { queryMetadata }) : null,
-    [rowObjects, headers, availableViz, queryMetadata]
+    availableViz.includes('pie') ? preparePieChartData(rowObjects, headers, {
+      categoryColumn: pieCategoryCol,
+      valueColumn: pieValueCol,
+      queryMetadata
+    }) : null,
+    [rowObjects, headers, availableViz, queryMetadata, pieCategoryCol, pieValueCol]
   );
 
   const scatterData = useMemo(() =>
-    availableViz.includes('scatter') ? prepareScatterPlotData(rowObjects, headers, { queryMetadata }) : null,
-    [rowObjects, headers, availableViz, queryMetadata]
+    availableViz.includes('scatter') ? prepareScatterPlotData(rowObjects, headers, {
+      xColumn: scatterXCol,
+      yColumn: scatterYCol,
+      queryMetadata
+    }) : null,
+    [rowObjects, headers, availableViz, queryMetadata, scatterXCol, scatterYCol]
   );
 
   const totalRows = rows.length;
@@ -301,6 +331,36 @@ export const QueryResults = () => {
 
             {/* Bar Chart */}
             <TabsContent value="bar">
+              {/* Column Selection Controls */}
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">Category Column</label>
+                  <Select value={barCategoryCol || barData?.metadata.xAxisLabel || ''} onValueChange={setBarCategoryCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${barData?.metadata.xAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {headers.map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">Value Column</label>
+                  <Select value={barValueCol || barData?.metadata.yAxisLabel || ''} onValueChange={setBarValueCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${barData?.metadata.yAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {numericColumns.map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {barData?.metadata.warning && (
                 <Alert className="mb-4">
                   <Info size={16} />
@@ -312,6 +372,36 @@ export const QueryResults = () => {
 
             {/* Line Chart */}
             <TabsContent value="line">
+              {/* Column Selection Controls */}
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">Time/Date Column</label>
+                  <Select value={lineDateCol || lineData?.metadata.xAxisLabel || ''} onValueChange={setLineDateCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${lineData?.metadata.xAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(temporalColumns.length > 0 ? temporalColumns : headers).map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">Value Column</label>
+                  <Select value={lineValueCol || lineData?.metadata.yAxisLabel || ''} onValueChange={setLineValueCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${lineData?.metadata.yAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {numericColumns.map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {lineData?.metadata.warning && (
                 <Alert className="mb-4">
                   <Info size={16} />
@@ -323,6 +413,36 @@ export const QueryResults = () => {
 
             {/* Pie Chart */}
             <TabsContent value="pie">
+              {/* Column Selection Controls */}
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">Category Column</label>
+                  <Select value={pieCategoryCol || pieData?.metadata.xAxisLabel || ''} onValueChange={setPieCategoryCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${pieData?.metadata.xAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {headers.map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">Value Column</label>
+                  <Select value={pieValueCol || pieData?.metadata.yAxisLabel || ''} onValueChange={setPieValueCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${pieData?.metadata.yAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {numericColumns.map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {pieData?.metadata.warning && (
                 <Alert className="mb-4">
                   <Info size={16} />
@@ -334,13 +454,43 @@ export const QueryResults = () => {
 
             {/* Scatter Plot */}
             <TabsContent value="scatter">
+              {/* Column Selection Controls */}
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">X Column</label>
+                  <Select value={scatterXCol || scatterData?.metadata.xAxisLabel || ''} onValueChange={setScatterXCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${scatterData?.metadata.xAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {numericColumns.map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm text-muted-foreground mb-1 block">Y Column</label>
+                  <Select value={scatterYCol || scatterData?.metadata.yAxisLabel || ''} onValueChange={setScatterYCol}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Auto: ${scatterData?.metadata.yAxisLabel || 'Select column'}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {numericColumns.map(h => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {scatterData?.metadata.warning && (
                 <Alert className="mb-4">
                   <Info size={16} />
                   <AlertDescription>{scatterData.metadata.warning}</AlertDescription>
                 </Alert>
               )}
-              {scatterData && <ScatterPlotViz data={scatterData.data} />}
+              {scatterData && <ScatterPlotViz data={scatterData.data} metadata={scatterData.metadata} />}
             </TabsContent>
           </Tabs>
         </div>

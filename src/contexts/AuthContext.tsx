@@ -28,20 +28,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const initializeAuth = () => {
+        const initializeAuth = async () => {
             try {
                 const storedToken = localStorage.getItem('auth_token');
                 const storedUser = localStorage.getItem('auth_user');
 
                 if (storedToken && storedUser) {
-                    const parsedUser = JSON.parse(storedUser);
+                    // 1. Optimistically set state to avoid flicker
                     setToken(storedToken);
-                    setUser(parsedUser);
+                    setUser(JSON.parse(storedUser));
+
+                    // 2. Validate with backend and fetch fresh user data
+                    try {
+                        const { userService } = await import('@/services/api');
+                        const freshProfile = await userService.getProfile();
+
+                        // Update user state with fresh data from backend
+                        const updatedUser: User = {
+                            id: freshProfile.id,
+                            email: freshProfile.email,
+                            total_queries: freshProfile.total_queries || 0,
+                            total_files_processed: freshProfile.total_files_processed || 0,
+                            total_saved_queries: freshProfile.total_saved_queries || 0,
+                        };
+
+                        setUser(updatedUser);
+                        localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+                    } catch (validationError) {
+                        console.error("Token validation failed:", validationError);
+                        // Invalid token or server down -> Logout
+                        localStorage.removeItem('auth_token');
+                        localStorage.removeItem('auth_user');
+                        setToken(null);
+                        setUser(null);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to rehydrate session:", error);
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('auth_user');
+                setToken(null);
+                setUser(null);
             } finally {
                 setIsLoading(false);
             }

@@ -1,6 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { AggregatedData } from '@/utils/dataAggregation';
 import { PreparedChartData } from '@/utils/visualizationPreparers';
+import { getBrandColorPalette } from '@/utils/chartColors';
 
 interface PieChartVizProps {
     data: AggregatedData[];
@@ -16,18 +17,8 @@ export const PieChartViz = ({ data, metadata }: PieChartVizProps) => {
         );
     }
 
-    // Color palette
-    const COLORS = [
-        'hsl(220, 70%, 60%)', // Primary blue
-        'hsl(280, 70%, 60%)', // Purple
-        'hsl(160, 70%, 50%)', // Teal
-        'hsl(30, 90%, 60%)',  // Orange
-        'hsl(340, 70%, 60%)', // Pink
-        'hsl(120, 60%, 50%)', // Green
-        'hsl(200, 80%, 55%)', // Cyan
-        'hsl(50, 90%, 60%)',  // Yellow
-        'hsl(0, 70%, 60%)',   // Red
-    ];
+    // Brand color palette
+    const COLORS = getBrandColorPalette();
 
     const renderLabel = (entry: any) => {
         const percent = entry.percentage?.toFixed(1) || '0.0';

@@ -1,6 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AggregatedData } from '@/utils/dataAggregation';
 import { PreparedChartData } from '@/utils/visualizationPreparers';
+import { getBrandGradient } from '@/utils/chartColors';
 
 interface BarChartVizProps {
     data: AggregatedData[];
@@ -16,13 +17,9 @@ export const BarChartViz = ({ data, metadata }: BarChartVizProps) => {
         );
     }
 
-    // Generate color gradient based on primary color
-    const getColor = (index: number) => {
-        const hue = 220; // Primary blue hue
-        const saturation = 70;
-        const lightness = 60 - (index * 2); // Gradient effect
-        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-    };
+    // Generate brand color gradient
+    const colors = getBrandGradient(data.length, true); // true = dark to light
+
 
     return (
         <div className="w-full h-96 pt-4" style={{ overflow: 'visible' }}>
@@ -57,7 +54,7 @@ export const BarChartViz = ({ data, metadata }: BarChartVizProps) => {
                     />
                     <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                         {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={getColor(index)} />
+                            <Cell key={`cell-${index}`} fill={colors[index]} />
                         ))}
                     </Bar>
                 </BarChart>

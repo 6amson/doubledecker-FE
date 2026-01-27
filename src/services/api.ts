@@ -111,6 +111,10 @@ export const uploadsService = {
         const response = await api.get<PaginatedResponse<Upload>>(url);
         return response.data;
     },
+
+    deleteUpload: async (id: string): Promise<void> => {
+        await api.delete(`/uploads/${id}`);
+    },
 };
 
 export const userService = {

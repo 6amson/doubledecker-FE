@@ -122,8 +122,19 @@ export const Login = () => {
             </div>
 
             <div className="hidden lg:block relative bg-muted overflow-hidden">
+                {/* Background Image */}
+                <img
+                    src="/homepage_image.svg"
+                    alt="Data Visualization"
+                    className="absolute inset-0 w-full h-full object-contain object-center opacity-40"
+                />
+
+                {/* Gradient Overlays for fade effect */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-primary/5 pattern-grid-lg opacity-20" />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+
+                {/* Text Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-20 space-y-6">
                     <div className="space-y-2">
                         <h2 className="text-2xl font-medium tracking-tight">

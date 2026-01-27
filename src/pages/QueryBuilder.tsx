@@ -27,6 +27,7 @@ export const QueryBuilder = () => {
   // Data state - initialize empty, will be populated from file or localStorage
   const [columns, setColumns] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
+  const [totalRowCount, setTotalRowCount] = useState(0);
 
   // Query state
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
@@ -107,22 +108,46 @@ export const QueryBuilder = () => {
     return cols;
   }, [columns, transforms]);
 
-  const columnsForTransform = columnsWithTransforms;
+  // Transform: Can operate on columns available at its execution point
+  // If GroupBy is active, only group keys + aggregations exist
+  // Otherwise, all original + transformed columns are available
+  const columnsForTransform = useMemo(() => {
+    const isGroupedOrAggregated = groupBy.columns.length > 0 || groupBy.aggregations.length > 0;
+
+    if (isGroupedOrAggregated) {
+      const groupCols = groupBy.columns;
+      const aggAliases = groupBy.aggregations.map(a => a.alias).filter(Boolean) as string[];
+      return Array.from(new Set([...groupCols, ...aggAliases]));
+    }
+
+    // If no grouping, all original + transformed columns are available
+    return columnsWithTransforms;
+  }, [columnsWithTransforms, groupBy]);
   const columnsForGroupBy = columnsWithTransforms;
 
   // 3. GroupBy: Destructive operation.
-  // If active, it reduces the dataset to strict Group Keys + Aggregations.
+  // If active (either grouping or aggregating), it reduces the dataset to strict Group Keys + Aggregations.
+  // Post-GroupBy transforms (transforms on aggregations) are also valid output columns.
   const columnsForSortAndSelect = useMemo(() => {
-    if (groupBy.columns.length > 0) {
+    const isGroupedOrAggregated = groupBy.columns.length > 0 || groupBy.aggregations.length > 0;
+
+    if (isGroupedOrAggregated) {
       const groupCols = groupBy.columns;
       // Aggregations NOW strictly have aliases (enforced by AggregationModal)
       const aggCols = groupBy.aggregations.map(a => a.alias).filter(Boolean) as string[];
 
-      return Array.from(new Set([...groupCols, ...aggCols]));
+      // Post-GroupBy transforms: transforms that operate on aggregation results
+      const aggAliasesLower = aggCols.map(a => a.toLowerCase());
+      const postGroupTransforms = transforms
+        .filter(t => aggAliasesLower.includes(t.column.toLowerCase()))
+        .map(t => t.alias)
+        .filter(Boolean) as string[];
+
+      return Array.from(new Set([...groupCols, ...aggCols, ...postGroupTransforms]));
     }
-    // If no grouping, Sort/Select sees all transformed columns
+    // If no grouping/aggregation, Sort/Select sees all transformed columns
     return columnsWithTransforms;
-  }, [columnsWithTransforms, groupBy]);
+  }, [columnsWithTransforms, groupBy, transforms]);
 
   // Parse actual file if provided OR load from URL if fileLink provided
   useEffect(() => {
@@ -134,21 +159,26 @@ export const QueryBuilder = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        const lines = text.split('\n').filter(line => line.trim());
+        // Optimization: Only process needed lines
+        const allLines = text.split('\n');
+        const totalLines = allLines.filter(line => line.trim()).length - 1; // Subtract header
+        const previewLines = allLines.slice(0, 101).filter(line => line.trim()); // Header + 100 rows
 
-        if (lines.length > 0) {
-          const parsedHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        if (previewLines.length > 0) {
+          const parsedHeaders = previewLines[0].split(',').map(h => h.trim().replace(/"/g, '')).filter(h => h && h.trim());
           setColumns(parsedHeaders);
           setSelectedColumns(parsedHeaders);
 
-          const dataRows = lines.slice(1).map(line =>
+          const dataRows = previewLines.slice(1).map(line =>
             line.split(',').map(cell => cell.trim().replace(/"/g, ''))
           );
           setRows(dataRows);
+          setTotalRowCount(Math.max(0, totalLines));
 
           // Persist to localStorage
           localStorage.setItem('csv_columns', JSON.stringify(parsedHeaders));
-          localStorage.setItem('csv_rows', JSON.stringify(dataRows.slice(0, 100))); // Store first 100 rows to avoid quota issues
+          localStorage.setItem('csv_rows', JSON.stringify(dataRows));
+          localStorage.setItem('csv_total_rows', Math.max(0, totalLines).toString());
         }
         setIsLoadingData(false);
       };
@@ -170,21 +200,25 @@ export const QueryBuilder = () => {
             throw new Error('The file link has expired. Please select the file again from Recent Files.');
           }
 
-          const lines = text.split('\n').filter(line => line.trim());
+          const allLines = text.split('\n');
+          const totalLines = allLines.filter(line => line.trim()).length - 1;
+          const previewLines = allLines.slice(0, 101).filter(line => line.trim());
 
-          if (lines.length > 0) {
-            const parsedHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+          if (previewLines.length > 0) {
+            const parsedHeaders = previewLines[0].split(',').map(h => h.trim().replace(/"/g, '')).filter(h => h && h.trim());
             setColumns(parsedHeaders);
             setSelectedColumns(parsedHeaders);
 
-            const dataRows = lines.slice(1).map(line =>
+            const dataRows = previewLines.slice(1).map(line =>
               line.split(',').map(cell => cell.trim().replace(/"/g, ''))
             );
             setRows(dataRows);
+            setTotalRowCount(Math.max(0, totalLines));
 
             // Persist to localStorage
             localStorage.setItem('csv_columns', JSON.stringify(parsedHeaders));
-            localStorage.setItem('csv_rows', JSON.stringify(dataRows.slice(0, 100)));
+            localStorage.setItem('csv_rows', JSON.stringify(dataRows));
+            localStorage.setItem('csv_total_rows', Math.max(0, totalLines).toString());
           }
           setIsLoadingData(false);
         })
@@ -196,6 +230,7 @@ export const QueryBuilder = () => {
           // Clear expired data from localStorage
           localStorage.removeItem('csv_columns');
           localStorage.removeItem('csv_rows');
+          localStorage.removeItem('csv_total_rows');
           localStorage.removeItem('current_file_name');
 
           // Redirect to dashboard after a short delay
@@ -207,13 +242,15 @@ export const QueryBuilder = () => {
       // Try to restore from localStorage if no file provided
       const storedColumns = localStorage.getItem('csv_columns');
       const storedRows = localStorage.getItem('csv_rows');
+      const storedTotalRows = localStorage.getItem('csv_total_rows');
 
       if (storedColumns && storedRows) {
         try {
-          const parsedColumns = JSON.parse(storedColumns);
+          const parsedColumns = JSON.parse(storedColumns).filter((col: string) => col && col.trim());
           const parsedRows = JSON.parse(storedRows);
           setColumns(parsedColumns);
           setRows(parsedRows);
+          setTotalRowCount(storedTotalRows ? parseInt(storedTotalRows) : parsedRows.length);
           setSelectedColumns(parsedColumns);
         } catch (e) {
           console.error('Failed to restore CSV data from localStorage:', e);
@@ -265,12 +302,24 @@ export const QueryBuilder = () => {
       }
       return [...prev, transform];
     });
+
+    // Auto-select the new transform alias column (moved outside state updater)
+    if (transform.alias) {
+      setSelectedColumns(prevSelected =>
+        prevSelected.includes(transform.alias) ? prevSelected : [...prevSelected, transform.alias]
+      );
+    }
+
     setEditingTransform(null);
   }, []);
 
   const handleRemoveTransform = useCallback((id: string) => {
+    const transformToRemove = transforms.find(t => t.id === id);
+    if (transformToRemove?.alias) {
+      setSelectedColumns(prev => prev.filter(col => col !== transformToRemove.alias));
+    }
     setTransforms(prev => prev.filter(t => t.id !== id));
-  }, []);
+  }, [transforms]);
 
   // Sort handlers
   const handleSaveSort = useCallback((sort: SortRule) => {
@@ -312,15 +361,27 @@ export const QueryBuilder = () => {
         aggregations: [...prev.aggregations, agg]
       };
     });
+
+    // Auto-select the new aggregation alias column
+    if (agg.alias) {
+      setSelectedColumns(prevSelected =>
+        prevSelected.includes(agg.alias!) ? prevSelected : [...prevSelected, agg.alias!]
+      );
+    }
+
     setEditingAgg(null);
   }, []);
 
   const handleRemoveAggregation = useCallback((id: string) => {
+    const aggToRemove = groupBy.aggregations.find(a => a.id === id);
+    if (aggToRemove?.alias) {
+      setSelectedColumns(prev => prev.filter(col => col !== aggToRemove.alias));
+    }
     setGroupBy(prev => ({
       ...prev,
       aggregations: prev.aggregations.filter(a => a.id !== id)
     }));
-  }, []);
+  }, [groupBy]);
 
 
   // Run query - navigate to results page
@@ -495,6 +556,12 @@ export const QueryBuilder = () => {
       return;
     }
 
+    // Validate Aggregation requires at least one grouping column (Rear Added)
+    if (groupBy.aggregations.length > 0 && groupBy.columns.length === 0) {
+      toast.error("Aggregation requires at least one grouping column");
+      return;
+    }
+
     try {
       const operations: Operation[] = [];
 
@@ -527,14 +594,8 @@ export const QueryBuilder = () => {
 
       // 5. Select - filter to only valid columns after GroupBy
       if (selectedColumns.length > 0) {
-        // Calculate valid columns (same logic as handleRunQuery)
-        let validColumns = selectedColumns;
-        if (groupBy.columns.length > 0) {
-          const groupCols = groupBy.columns;
-          const aggCols = groupBy.aggregations.map(a => a.alias).filter(Boolean) as string[];
-          const availableAfterGroup = Array.from(new Set([...groupCols, ...aggCols]));
-          validColumns = selectedColumns.filter(col => availableAfterGroup.includes(col));
-        }
+        // Calculate valid columns (use centralized logic)
+        const validColumns = selectedColumns.filter(col => columnsForSortAndSelect.includes(col));
 
         if (validColumns.length > 0) {
           operations.push({ type: 'Select', columns: validColumns.map(col => col.toLowerCase()) });
@@ -554,7 +615,7 @@ export const QueryBuilder = () => {
       toast.error(errorMessage);
       console.error('Save query error:', error);
     }
-  }, [selectedColumns, filters, transforms, sorts, groupBy, limit]);
+  }, [selectedColumns, filters, transforms, sorts, groupBy, limit, columnsForSortAndSelect]);
 
   // Load query handler
   const handleLoadQuery = useCallback((query: SavedQuery) => {
@@ -660,7 +721,7 @@ export const QueryBuilder = () => {
                 onEditAggregation={(a) => { setEditingAgg(a); setAggModalOpen(true); }}
                 onRemoveAggregation={handleRemoveAggregation}
                 limit={limit}
-                totalRows={rows.length}
+                totalRows={totalRowCount}
                 onEditLimit={() => setLimitModalOpen(true)}
                 onClearLimit={() => setLimit(null)}
               />
@@ -687,6 +748,7 @@ export const QueryBuilder = () => {
                   rows={rows}
                   fileName={fileName}
                   fileSize={file?.size}
+                  totalRowCount={totalRowCount}
                 />
 
                 <QueryPreview
@@ -717,6 +779,7 @@ export const QueryBuilder = () => {
         open={transformModalOpen}
         onOpenChange={setTransformModalOpen}
         columns={columnsForTransform}
+        originalColumns={columns}
         transform={editingTransform}
         onSave={handleSaveTransform}
       />
@@ -725,6 +788,7 @@ export const QueryBuilder = () => {
         open={sortModalOpen}
         onOpenChange={setSortModalOpen}
         columns={columnsForSortAndSelect}
+        originalColumns={columns}
         sort={editingSort}
         onSave={handleSaveSort}
       />
@@ -741,7 +805,7 @@ export const QueryBuilder = () => {
         open={limitModalOpen}
         onOpenChange={setLimitModalOpen}
         limit={limit}
-        totalRows={rows.length}
+        totalRows={totalRowCount}
         onSave={setLimit}
       />
 

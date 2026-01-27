@@ -101,7 +101,7 @@ export const FilterModal = ({
                 <SelectValue placeholder="Select column" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                {columns.map((col) => (
+                {columns.filter(col => col && col.trim()).map((col) => (
                   <SelectItem key={col} value={col}>
                     {col}
                   </SelectItem>

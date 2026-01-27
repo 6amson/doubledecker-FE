@@ -242,7 +242,9 @@ export function prepareScatterPlotData(
                 : 'All points',
             warning: rows.length > maxPoints
                 ? `Showing ${maxPoints.toLocaleString()} of ${rows.length.toLocaleString()} points`
-                : undefined
+                : undefined,
+            xAxisLabel: xColumn,
+            yAxisLabel: yColumn
         }
     };
 }

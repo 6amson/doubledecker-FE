@@ -272,7 +272,14 @@ export const OperationsSidebar = ({
             <div className="border-t border-border pt-3">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-muted-foreground">Aggregations:</p>
-                <Button variant="ghost" size="sm" className="h-6 px-2" onClick={onAddAggregation}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2"
+                  onClick={onAddAggregation}
+                  disabled={groupBy.columns.length === 0}
+                  title={groupBy.columns.length === 0 ? "Select a group column first" : "Add Aggregation"}
+                >
                   <Plus size={12} />
                 </Button>
               </div>

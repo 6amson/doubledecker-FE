@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,6 +28,7 @@ interface SortModalProps {
   columns: string[];
   sort: SortRule | null;
   onSave: (sort: SortRule) => void;
+  originalColumns?: string[]; // Optional: to distinguish transformed columns
 }
 
 export const SortModal = ({
@@ -36,6 +37,7 @@ export const SortModal = ({
   columns,
   sort,
   onSave,
+  originalColumns = [],
 }: SortModalProps) => {
   const [column, setColumn] = useState(sort?.column || "");
   const [ascending, setAscending] = useState(sort?.ascending ?? true);
@@ -78,11 +80,19 @@ export const SortModal = ({
                 <SelectValue placeholder="Select column" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                {columns.map((col) => (
-                  <SelectItem key={col} value={col}>
-                    {col}
-                  </SelectItem>
-                ))}
+                {columns.filter(col => col && col.trim()).map((col) => {
+                  const isTransformed = originalColumns.length > 0 && !originalColumns.includes(col);
+                  return (
+                    <SelectItem key={col} value={col}>
+                      <div className="flex items-center gap-2">
+                        <span>{col}</span>
+                        {isTransformed && (
+                          <Wand2 size={12} className="text-primary/70" />
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

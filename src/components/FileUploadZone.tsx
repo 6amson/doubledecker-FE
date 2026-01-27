@@ -24,7 +24,7 @@ export const FileUploadZone = ({ onFileSelect }: FileUploadZoneProps) => {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith('.csv')) {
       setSelectedFile(file);
@@ -73,7 +73,7 @@ export const FileUploadZone = ({ onFileSelect }: FileUploadZoneProps) => {
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <FileSpreadsheet size={14} />
-            <span>Supports .csv files up to 50MB</span>
+            <span>Supports .csv files up to 15MB</span>
           </div>
         </label>
       ) : (

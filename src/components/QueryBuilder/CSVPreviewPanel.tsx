@@ -7,9 +7,10 @@ interface CSVPreviewPanelProps {
   rows: string[][];
   fileName?: string;
   fileSize?: number;
+  totalRowCount?: number;
 }
 
-const PREVIEW_ROWS = 5;
+const PREVIEW_ROWS = 50;
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B';
@@ -19,11 +20,11 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-export const CSVPreviewPanel = ({ headers, rows, fileName = "uploaded_data.csv", fileSize }: CSVPreviewPanelProps) => {
+export const CSVPreviewPanel = ({ headers, rows, fileName = "uploaded_data.csv", fileSize, totalRowCount }: CSVPreviewPanelProps) => {
   const displayRows = rows.slice(0, PREVIEW_ROWS);
-  const totalRows = rows.length;
+  const totalRowsDisplay = totalRowCount !== undefined ? totalRowCount : rows.length;
   const totalColumns = headers.length;
-  
+
   return (
     <div className="query-panel">
       {/* Header */}
@@ -40,7 +41,7 @@ export const CSVPreviewPanel = ({ headers, rows, fileName = "uploaded_data.csv",
         </div>
         <div className="flex items-center gap-2">
           <Database size={14} />
-          <span>{totalRows.toLocaleString()} rows</span>
+          <span>{totalRowsDisplay.toLocaleString()} rows</span>
         </div>
         <div className="flex items-center gap-2">
           <Columns3 size={14} />
@@ -55,31 +56,35 @@ export const CSVPreviewPanel = ({ headers, rows, fileName = "uploaded_data.csv",
       </div>
 
       {/* Table Preview */}
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <div className="min-w-max">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-border">
-                {headers.map((header, i) => (
-                  <TableHead key={i} className="table-header whitespace-nowrap px-4">
-                    {header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayRows.map((row, rowIndex) => (
-                <TableRow key={rowIndex} className="border-border hover:bg-muted/30">
-                  {row.map((cell, cellIndex) => (
-                    <TableCell key={cellIndex} className="text-sm text-foreground/90 whitespace-nowrap px-4">
-                      {cell || <span className="text-muted-foreground italic">empty</span>}
-                    </TableCell>
+      {/* Table Preview */}
+      <div className="rounded-lg border border-border overflow-hidden">
+        <ScrollArea className="h-[500px]">
+          <div className="min-w-max">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-border">
+                  {headers.map((header, i) => (
+                    <TableHead key={i} className="table-header whitespace-nowrap px-4">
+                      {header}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {displayRows.map((row, rowIndex) => (
+                  <TableRow key={rowIndex} className="border-border hover:bg-muted/30">
+                    {row.map((cell, cellIndex) => (
+                      <TableCell key={cellIndex} className="text-sm text-foreground/90 whitespace-nowrap px-4">
+                        {cell || <span className="text-muted-foreground italic">empty</span>}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     </div>
   );
