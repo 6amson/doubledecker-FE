@@ -1,4 +1,4 @@
-# 🚍 DoubleDecker
+# DoubleDecker
 
 > A powerful CSV query builder and visualization platform with a London Bus Red aesthetic
 
@@ -6,40 +6,40 @@ DoubleDecker is a modern web application that transforms CSV data analysis into 
 
 ---
 
-## ✨ Features
+## Features
 
-### 🔍 **Visual Query Builder**
+### **Visual Query Builder**
 - **No SQL Required**: Build complex queries through an intuitive drag-and-drop interface
 - **7 Operation Types**: Select, Filter, Transform, GroupBy, Sort, Limit, and Aggregations
 - **Smart Column Tracking**: Automatic alias management and column transformation tracking
 - **Real-time Preview**: See your query structure before execution
 
-### 📊 **Intelligent Visualizations**
+### **Intelligent Visualizations**
 - **Auto-Detection**: Automatically suggests the best chart type based on your data
 - **4 Chart Types**: Bar, Line, Pie, and Scatter plots
 - **Manual Override**: Select specific columns for custom visualizations
 - **Brand-Consistent Colors**: All charts use the London Bus Red color palette
 
-### 💾 **Data Management**
+### **Data Management**
 - **CSV Upload**: Drag-and-drop file upload with preview
 - **Recent Files**: Quick access to previously uploaded datasets
 - **Saved Queries**: Save and reuse query templates across different files
 - **Export Results**: Download query results as CSV
 
-### 🎨 **Premium Design**
+### **Premium Design**
 - **London Bus Red Branding**: Distinctive red accent color throughout
 - **Glassmorphism UI**: Modern glass-card effects with backdrop blur
 - **Dark Mode Support**: Seamless theme switching
 - **Responsive Design**: Optimized for desktop workflows
 
-### 🔐 **Secure Authentication**
+### **Secure Authentication**
 - **JWT-based Auth**: Secure token-based authentication
 - **Protected Routes**: Automatic redirect for unauthenticated users
 - **User Profiles**: Track queries, files processed, and saved queries
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
